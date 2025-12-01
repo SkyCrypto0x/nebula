@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nebula Bridge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <!-- background glow blobs -->
+      <div class="bg-orbit bg-orbit-1"></div>
+      <div class="bg-orbit bg-orbit-2"></div>
+
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="logo-circle">N</div>
+          <div>
+            <div class="brand-title">Nebula Bridge</div>
+            <div class="brand-subtitle">Cross-chain, non-custodial routing</div>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <span class="backend-pill" id="backendStatus">Backend: online</span>
+          <button id="openWalletModal" class="wallet-btn">
+            Connect wallet
+          </button>
+        </div>
+      </header>
+
+      <!-- Main 2-column layout -->
+      <main class="bridge-layout">
+        <!-- Left: main bridge card -->
+        <section class="bridge-panel">
+          <h1 class="bridge-heading">Bridge assets in one smooth flow</h1>
+          <p class="bridge-subheading">
+            Pick your chains, enter amount, choose destination wallet and let
+            Nebula route liquidity for you.
+          </p>
+
+          <div class="field-group-label">From chain</div>
+          <div class="chain-row">
+            <div class="select-shell">
+              <label>From</label>
+              <select id="fromChain">
+                <option value="solana">Solana</option>
+                <option value="ethereum">Ethereum</option>
+                <option value="bsc">BNB Chain</option>
+                <option value="arbitrum">Arbitrum</option>
+                <option value="base">Base</option>
+              </select>
+              <span class="chevron">▾</span>
+            </div>
+
+            <button id="flipChains" class="flip-btn" type="button">⇄</button>
+
+            <div class="select-shell">
+              <label>To</label>
+              <select id="toChain">
+                <option value="ethereum">Ethereum</option>
+                <option value="solana">Solana</option>
+                <option value="bsc">BNB Chain</option>
+                <option value="arbitrum">Arbitrum</option>
+                <option value="base">Base</option>
+              </select>
+              <span class="chevron">▾</span>
+            </div>
+          </div>
+
+          <!-- Send section -->
+          <div class="card-section">
+            <div class="card-section-header">
+              <span>Send</span>
+              <div class="token-chip">
+                <span>Token</span>
+                <select id="token">
+                  <option value="USDC">USDC</option>
+                  <option value="USDT">USDT</option>
+                  <option value="ETH">ETH</option>
+                  <option value="SOL">SOL</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="amount-row">
+              <input
+                id="amount"
+                class="amount-input"
+                type="text"
+                placeholder="Amount in normal units (e.g. 10 = 10 USDC)"
+              />
+              <button class="max-btn" type="button">MAX</button>
+            </div>
+            <div class="helper-text">
+              Amount is in normal units. We'll handle decimals & platform fee.
+            </div>
+          </div>
+
+          <div class="flow-arrow">
+            <span>↓</span>
+          </div>
+
+          <!-- Receive section -->
+          <div class="card-section">
+            <div class="card-section-header">
+              <span>Receive (estimated)</span>
+              <span class="summary-value-muted" id="receivePreview">–</span>
+            </div>
+            <div class="helper-text">
+              Includes all routing costs & hidden platform fee.
+            </div>
+          </div>
+
+          <!-- Destination wallet -->
+          <div style="margin-top: 16px">
+            <div class="field-group-label">Destination wallet</div>
+            <input
+              id="destAddress"
+              class="dest-input"
+              type="text"
+              placeholder="Paste address on the destination chain (optional)"
+            />
+            <div class="helper-text">
+              Leave empty to receive on your connected wallet for the target
+              chain.
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="actions-row">
+            <button id="quoteBtn" class="primary-btn" type="button">
+              Get bridge quote
+            </button>
+            <button
+              id="swapBtn"
+              class="secondary-btn"
+              type="button"
+              disabled
+            >
+              Execute bridge
+            </button>
+          </div>
+
+          <!-- Status -->
+          <div id="status" class="status-bar">Ready when you are.</div>
+
+          <!-- Advanced raw payload -->
+          <details class="advanced-toggle">
+            <summary>Advanced: raw quote payload</summary>
+            <pre id="output"></pre>
+          </details>
+        </section>
+
+        <!-- Right: summary card -->
+        <aside class="summary-card">
+          <div>
+            <div class="summary-title">Bridge summary</div>
+            <div class="summary-subtitle">
+              Simple overview of what you send and receive.
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div>
+              <div class="summary-label">You send</div>
+              <div class="summary-value" id="youSend">-</div>
+              <div class="summary-value-muted" id="youSendChain">-</div>
+            </div>
+
+            <div>
+              <div class="summary-label">You receive (estimated)</div>
+              <div class="summary-value" id="youReceive">-</div>
+              <div class="summary-value-muted" id="youReceiveChain">-</div>
+            </div>
+
+            <div>
+              <div class="summary-label">Source wallet</div>
+              <div class="summary-value-muted">
+                <span id="sourceWallet">Not connected</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="summary-label">Destination wallet</div>
+              <div class="summary-value-muted">
+                <span id="destinationWallet">Not set</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-footer">
+            <span>
+              Non-custodial cross-chain bridge. All swaps settle under your
+              brand. Liquidity under the hood.
+            </span>
+            <span class="wallet-pill" id="walletSummary">No wallet</span>
+          </div>
+        </aside>
+      </main>
+
+      <!-- Footer -->
+      <footer class="page-footer">
+        <span>© Nebula Bridge · Powered by deep cross-chain routing.</span>
+        <span>All swaps execute directly from user wallets.</span>
+      </footer>
+
+      <!-- Wallet selection modal -->
+      <div id="walletBackdrop" class="modal-backdrop">
+        <div id="walletModal" class="modal" aria-hidden="true">
+          <div class="modal-header">
+            <div class="modal-title">Select wallet</div>
+            <button
+              id="closeWalletModal"
+              class="modal-close"
+              type="button"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="wallet-list">
+            <button
+              class="wallet-item"
+              type="button"
+              data-wallet="metamask"
+            >
+              <span>MetaMask / EVM wallet</span>
+              <span>→</span>
+            </button>
+            <button
+              class="wallet-item"
+              type="button"
+              data-wallet="phantom"
+            >
+              <span>Phantom (Solana)</span>
+              <span>→</span>
+            </button>
+            <button class="wallet-item" type="button" data-wallet="soon">
+              <span>WalletConnect (coming soon)</span>
+              <span>…</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
