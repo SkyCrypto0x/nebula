@@ -5,8 +5,8 @@
     "moduleResolution": "Node",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowJs": false
+    "outDir": "dist/frontend",
+    "skipLibCheck": true
   },
   "include": ["public/app.ts"],
   "exclude": ["node_modules"]
