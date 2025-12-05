@@ -1,17 +1,13 @@
 {
   "name": "mybridge",
   "version": "1.0.0",
-  "main": "dist/backend/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-
-    "build:backend": "tsc -p tsconfig.json",
-
-    "build:frontend": "tsc -p frontend.tsconfig.json && cp public/index.html dist/frontend/index.html && cp public/style.css dist/frontend/style.css",
-
+    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/server.ts\" \"tsc -w -p frontend.tsconfig.json\"",
+    "build:backend": "tsc",
+    "build:frontend": "tsc -p frontend.tsconfig.json",
     "build": "npm run build:backend && npm run build:frontend",
-
-    "start": "node dist/backend/server.js"
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "@mayanfinance/swap-sdk": "^12.1.0",
@@ -24,6 +20,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.5",
+    "concurrently": "^9.2.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3",
     "undici-types": "^7.16.0"
