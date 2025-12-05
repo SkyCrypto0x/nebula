@@ -886,14 +886,17 @@ body::before {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* 🔁 mobile e age bridge, pore summary */
   .summary-card {
-    order: -1;
+    order: 2;            /* or just remove order line entirely */
+    margin-top: 16px;
   }
 
   .topbar {
     padding-inline: 10px;
   }
 }
+
 
 @media (max-width: 640px) {
   .page-shell {
