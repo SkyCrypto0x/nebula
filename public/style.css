@@ -490,6 +490,9 @@ body::before {
   font-size: 22px;
   font-weight: 500;
   outline: none;
+
+  /* prevent input + placeholder from pushing outside */
+  min-width: 0;
 }
 
 .amount-input::placeholder {
@@ -639,6 +642,10 @@ body::before {
   font-size: 13px;
   cursor: not-allowed;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.9);
+
+  /* prevent tiny clipping / layout shifts */
+  box-sizing: border-box;
+  margin: 0;
 }
 
 /* status */
@@ -762,8 +769,8 @@ body::before {
 
 .page-footer {
   width: 100%;
-  padding: 18px 0 26px;
-  margin-top: 18px;
+  padding: 18px 0 20px;  /* slightly tighter bottom spacing */
+  margin-top: 8px;       /* closer to summary card for sharper look */
   display: flex;
   flex-direction: column;
   align-items: center;          /* center horizontally */
@@ -897,7 +904,7 @@ body::before {
   }
 }
 
-/*  MOBILE TWEAKS  ------------------------------------------- */
+/*  MOBILE & TABLET  ------------------------------------------- */
 @media (max-width: 900px) {
   .bridge-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -909,6 +916,7 @@ body::before {
     text-align: center;
   }
 
+  /* topbar + main padding */
   .topbar {
     padding: 12px 14px;
   }
@@ -922,9 +930,16 @@ body::before {
     letter-spacing: 0.16em;
   }
 
+  /* amount field + placeholder nicely inside card */
   .amount-input {
-    font-size: 22px;
-    line-height: 1.2;
+    font-size: 20px;
+    line-height: 1.25;
+  }
+
+  .amount-input::placeholder {
+    font-size: 14px;
+    line-height: 1.3;
+    white-space: normal;         /* allow wrapping */
   }
 
   .dest-input {
@@ -944,6 +959,7 @@ body::before {
     overflow: hidden;
   }
 
+  /* buttons full-width stacked */
   .actions-row {
     display: flex;
     flex-direction: column;
@@ -958,21 +974,26 @@ body::before {
     justify-content: center;
     font-size: 14px;
     padding-block: 11px;
+    box-sizing: border-box;
+    margin: 0;
   }
 
+  /* Receive (estimated) block centred */
   .card-section:nth-of-type(2) {
     text-align: center;
   }
 
-  .card-section:nth-of-type(2) .amount-row {
+  .card-section:nth-of-type(2) .card-section-header {
     justify-content: center;
+    gap: 8px;
   }
 
+  /* Summary card: 2 columns but all text centered */
   .summary-grid {
-    display: grid;
     grid-template-columns: 1fr 1fr;
     row-gap: 10px;
     justify-items: center;
+    text-align: center;
   }
 
   .summary-label,
@@ -987,16 +1008,10 @@ body::before {
     padding: 16px 12px 24px;
   }
 
-  @media (max-width: 640px) {
-  .summary-card {
-    align-items: center;
-  }
-}
-
-
+  /* keep wallet button top-right on one row */
   .topbar {
     margin-bottom: 18px;
-    flex-wrap: nowrap;  /* keep everything on one row */
+    flex-wrap: nowrap;
     gap: 10px;
   }
 
@@ -1028,7 +1043,24 @@ body::before {
     grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
   }
 
+  /* summary card: 1 column stack on narrow phones */
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    margin-top: 12px;
+  }
+
+  /* footer perfectly centred with tight spacing */
+  .page-footer {
+    margin-top: 8px;
+    padding-bottom: 20px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .page-footer span {
+    display: block;
   }
 }
