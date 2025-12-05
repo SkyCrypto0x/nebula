@@ -115,15 +115,17 @@ body::before {
 
 /* ---------- Top bar ---------- */
 
+/* TOPBAR LAYOUT */
 .topbar {
-  position: relative;
-  z-index: 3;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between;   /* brand-block left, topbar-right right */
+  padding: 16px 24px;
+  position: relative;
+  z-index: 10;
+
   gap: 18px;
   margin-bottom: 28px;
-  padding: 6px 10px;
   border-radius: var(--radius-lg);
   background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.86), transparent);
   border: 1px solid rgba(31, 41, 55, 0.9);
@@ -135,6 +137,10 @@ body::before {
   display: flex;
   align-items: center;
   gap: 14px;
+
+  /* left side gets flexible space */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .logo-circle {
@@ -184,10 +190,14 @@ body::before {
 }
 
 .topbar-right {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
+
+  /* ensure it stays on same row & doesn’t shrink oddly */
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .backend-pill {
@@ -751,14 +761,22 @@ body::before {
 /* ---------- Footer ---------- */
 
 .page-footer {
-  margin-top: 22px;
-  font-size: 11px;
-  color: rgba(148, 163, 184, 0.96);
+  width: 100%;
+  padding: 18px 0 26px;
+  margin-top: 18px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  opacity: 0.9;
+  flex-direction: column;
+  align-items: center;          /* center horizontally */
+  justify-content: center;
+  gap: 3px;                     /* small gap between the two lines */
+  font-size: 11px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.page-footer span {
+  display: block;
+  text-align: center;
 }
 
 /* ---------- Wallet modal ---------- */
@@ -885,23 +903,16 @@ body::before {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* mobile e age bridge, pore summary */
   .summary-card {
     order: 2;
     margin-top: 18px;
     text-align: center;
   }
 
-  /* 1) Topbar – connect wallet right side e */
   .topbar {
     padding: 12px 14px;
   }
 
-  .topbar-right {
-    margin-left: auto;
-  }
-
-  /* 2 + 5 + 6) Form fields & buttons – text chhoto + box er vitore */
   .bridge-panel {
     padding: 18px 14px;
   }
@@ -926,7 +937,6 @@ body::before {
     line-height: 1.4;
   }
 
-  /* destination wallet placeholder jeno baire na jay */
   .dest-input::placeholder {
     font-size: 12px;
     white-space: nowrap;
@@ -934,7 +944,6 @@ body::before {
     overflow: hidden;
   }
 
-  /* Get bridge quote / Execute bridge – full width & vitore text */
   .actions-row {
     display: flex;
     flex-direction: column;
@@ -951,7 +960,6 @@ body::before {
     padding-block: 11px;
   }
 
-  /* 3 + 4) Receive (estimated) center e */
   .card-section:nth-of-type(2) {
     text-align: center;
   }
@@ -960,7 +968,6 @@ body::before {
     justify-content: center;
   }
 
-  /* 7) Bridge summary er sob text centre */
   .summary-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -973,16 +980,6 @@ body::before {
   .summary-value-muted {
     text-align: center;
   }
-
-  /* 8) Nicher footer text centre */
-  .page-footer {
-    text-align: center;
-    font-size: 11px;
-    line-height: 1.5;
-    padding-inline: 14px;
-    flex-direction: column;
-    align-items: center;
-  }
 }
 
 @media (max-width: 640px) {
@@ -990,9 +987,16 @@ body::before {
     padding: 16px 12px 24px;
   }
 
+  @media (max-width: 640px) {
+  .summary-card {
+    align-items: center;
+  }
+}
+
+
   .topbar {
     margin-bottom: 18px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;  /* keep everything on one row */
     gap: 10px;
   }
 
@@ -1002,12 +1006,6 @@ body::before {
 
   .brand-subtitle {
     font-size: 11px;
-  }
-
-  .topbar-right {
-    flex-direction: row;
-    margin-left: 0;
-    margin-right: 0;
   }
 
   .backend-pill {
@@ -1032,11 +1030,5 @@ body::before {
 
   .summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .page-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 10px;
   }
 }
