@@ -879,24 +879,111 @@ body::before {
   }
 }
 
-/* ---------- Responsive ---------- */
-
+/*  MOBILE TWEAKS  ------------------------------------------- */
 @media (max-width: 900px) {
   .bridge-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* 🔁 mobile e age bridge, pore summary */
+  /* mobile e age bridge, pore summary */
   .summary-card {
-    order: 2;            /* or just remove order line entirely */
-    margin-top: 16px;
+    order: 2;
+    margin-top: 18px;
+    text-align: center;
   }
 
+  /* 1) Topbar – connect wallet right side e */
   .topbar {
-    padding-inline: 10px;
+    padding: 12px 14px;
+  }
+
+  .topbar-right {
+    margin-left: auto;
+  }
+
+  /* 2 + 5 + 6) Form fields & buttons – text chhoto + box er vitore */
+  .bridge-panel {
+    padding: 18px 14px;
+  }
+
+  .field-group-label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  .amount-input {
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .dest-input {
+    font-size: 13px;
+    padding-block: 10px;
+  }
+
+  .helper-text {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* destination wallet placeholder jeno baire na jay */
+  .dest-input::placeholder {
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  /* Get bridge quote / Execute bridge – full width & vitore text */
+  .actions-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    flex: 0 0 auto;
+    width: 100%;
+    justify-content: center;
+    font-size: 14px;
+    padding-block: 11px;
+  }
+
+  /* 3 + 4) Receive (estimated) center e */
+  .card-section:nth-of-type(2) {
+    text-align: center;
+  }
+
+  .card-section:nth-of-type(2) .amount-row {
+    justify-content: center;
+  }
+
+  /* 7) Bridge summary er sob text centre */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+  }
+
+  .summary-label,
+  .summary-value,
+  .summary-value-muted {
+    text-align: center;
+  }
+
+  /* 8) Nicher footer text centre */
+  .page-footer {
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.5;
+    padding-inline: 14px;
+    flex-direction: column;
+    align-items: center;
   }
 }
-
 
 @media (max-width: 640px) {
   .page-shell {
