@@ -1,26 +1,52 @@
 // public/app.ts
 
+// ---- Types ----
+
+type ChainName = "solana" | "ethereum" | "bsc" | "arbitrum" | "base";
+type TokenSymbol = "USDC" | "USDT" | "ETH" | "SOL";
+
 type QuoteApiResponse = {
   success: boolean;
-  netAmount?: string; // in smallest units from backend
+  netAmount?: string; // smallest units from backend
   feeAmount?: string;
   error?: string;
-  mayan?: any;
   rawQuote?: any;
 };
 
-const TOKEN_DECIMALS: Record<string, number> = {
+type StatusKind = "default" | "ok" | "error";
+
+type ConnectedWallet = {
+  type: "metamask" | "phantom";
+  address: string;
+};
+
+// small decimal map (UI side only)
+const TOKEN_DECIMALS: Record<TokenSymbol, number> = {
   USDC: 6,
   USDT: 6,
   ETH: 18,
   SOL: 9,
-  AUTO: 6,
 };
 
-// -------- DOM refs --------
+// ---- extended window type ----
+type AnyWindow = Window &
+  typeof globalThis & {
+    solana?: any;
+    ethereum?: any;
+  };
+
+const w = window as AnyWindow;
+
+// ---- DOM refs ----
+
+const backendStatusEl = document.getElementById(
+  "backendStatus"
+) as HTMLSpanElement;
 
 const fromChainEl = document.getElementById("fromChain") as HTMLSelectElement;
 const toChainEl = document.getElementById("toChain") as HTMLSelectElement;
+const flipBtn = document.getElementById("flipChains") as HTMLButtonElement;
+
 const tokenEl = document.getElementById("token") as HTMLSelectElement;
 const amountEl = document.getElementById("amount") as HTMLInputElement;
 const destAddressEl = document.getElementById(
@@ -29,79 +55,97 @@ const destAddressEl = document.getElementById(
 
 const quoteBtn = document.getElementById("quoteBtn") as HTMLButtonElement;
 const swapBtn = document.getElementById("swapBtn") as HTMLButtonElement;
-const flipBtn = document.getElementById("flipChains") as HTMLButtonElement;
 
 const statusEl = document.getElementById("status") as HTMLDivElement;
+const outputEl = document.getElementById("output") as HTMLPreElement;
+const receivePreviewEl = document.getElementById(
+  "receivePreview"
+) as HTMLSpanElement;
+
+// summary card
 const youSendEl = document.getElementById("youSend") as HTMLDivElement;
-const youReceiveEl = document.getElementById("youReceive") as HTMLDivElement;
 const youSendChainEl = document.getElementById(
   "youSendChain"
 ) as HTMLDivElement;
+const youReceiveEl = document.getElementById("youReceive") as HTMLDivElement;
 const youReceiveChainEl = document.getElementById(
   "youReceiveChain"
 ) as HTMLDivElement;
-const receivePreviewEl = document.getElementById(
-  "receivePreview"
-) as HTMLDivElement;
-
-const outputEl = document.getElementById("output") as HTMLPreElement;
 const sourceWalletEl = document.getElementById(
   "sourceWallet"
-) as HTMLDivElement;
+) as HTMLSpanElement;
 const destinationWalletEl = document.getElementById(
   "destinationWallet"
-) as HTMLDivElement;
+) as HTMLSpanElement;
 const walletSummaryEl = document.getElementById(
   "walletSummary"
 ) as HTMLSpanElement;
 
-// wallet modal elements
+// wallet modal
 const openWalletModalBtn = document.getElementById(
   "openWalletModal"
 ) as HTMLButtonElement;
-const walletModal = document.getElementById("walletModal") as HTMLDivElement;
-const walletBackdrop = document.getElementById(
-  "walletBackdrop"
-) as HTMLDivElement;
 const closeWalletModalBtn = document.getElementById(
   "closeWalletModal"
 ) as HTMLButtonElement;
-const walletItems = Array.from(
-  document.querySelectorAll<HTMLButtonElement>(".wallet-item")
+const walletBackdropEl = document.getElementById(
+  "walletBackdrop"
+) as HTMLDivElement;
+const walletModalEl = document.getElementById("walletModal") as HTMLDivElement;
+const walletItemBtns = document.querySelectorAll<HTMLButtonElement>(
+  ".wallet-item"
 );
 
-// extended window type
-type AnyWindow = Window &
-  typeof globalThis & {
-    solana?: any;
-    ethereum?: any;
-    ethers?: any;
-  };
+// ---- State ----
 
-const w = window as AnyWindow;
-
-// -------- state --------
-
+let isQuoting = false;
+let isSwapping = false;
 let lastQuote: QuoteApiResponse | null = null;
-let solanaWallet: string | null = null;
-let evmWallet: string | null = null;
 
-// -------- helpers --------
+let quoteMeta:
+  | {
+      token: TokenSymbol;
+      fromChain: ChainName;
+      toChain: ChainName;
+      inputAmount: number;
+    }
+  | null = null;
 
-function setStatus(msg: string, type: "default" | "error" | "ok" = "default") {
-  statusEl.textContent = msg;
-  statusEl.classList.remove("error", "ok");
-  if (type === "error") statusEl.classList.add("error");
-  if (type === "ok") statusEl.classList.add("ok");
+let connectedWallet: ConnectedWallet | null = null;
+
+// ---- Helper functions ----
+
+function setStatus(message: string, kind: StatusKind = "default") {
+  statusEl.textContent = message;
+  statusEl.classList.remove("ok", "error");
+
+  if (kind === "ok") statusEl.classList.add("ok");
+  if (kind === "error") statusEl.classList.add("error");
 }
 
-// smallest-units -> human readable
+function shortenAddress(addr: string, size = 4) {
+  if (!addr) return "";
+  if (addr.length <= size * 2) return addr;
+  return `${addr.slice(0, size)}…${addr.slice(-size)}`;
+}
+
+function clearQuoteState() {
+  lastQuote = null;
+  quoteMeta = null;
+  receivePreviewEl.textContent = "–";
+  youReceiveEl.textContent = "-";
+  youReceiveChainEl.textContent = "-";
+  outputEl.textContent = "";
+  swapBtn.disabled = true;
+}
+
+// smallest-units -> human readable (আগের কোড থেকে কপি করা লজিক)
 function formatFromMinimal(
   minimal: string | undefined,
   symbol: string
 ): string {
   if (!minimal) return "-";
-  const decimals = TOKEN_DECIMALS[symbol] ?? 6;
+  const decimals = TOKEN_DECIMALS[symbol as TokenSymbol] ?? 6;
 
   try {
     const bn = BigInt(minimal);
@@ -113,7 +157,7 @@ function formatFromMinimal(
     fracStr = fracStr.replace(/0+$/, "");
     return fracStr ? `${whole.toString()}.${fracStr}` : whole.toString();
   } catch {
-    // fallback
+    // fallback (Number ভিত্তিক)
     const num = Number(minimal);
     const factor = Math.pow(10, decimals);
     const human = num / factor;
@@ -123,256 +167,309 @@ function formatFromMinimal(
   }
 }
 
-// -------- flip chains --------
+function updateSummaryCard() {
+  const token = tokenEl.value as TokenSymbol;
+  const fromChain = fromChainEl.value as ChainName;
+  const toChain = toChainEl.value as ChainName;
+  const amountStr = amountEl.value.trim();
+  const amountNum = Number(amountStr || "0");
 
+  if (amountNum > 0) {
+    youSendEl.textContent = `${amountStr} ${token}`;
+    youSendChainEl.textContent = fromChain.toUpperCase();
+  } else {
+    youSendEl.textContent = "-";
+    youSendChainEl.textContent = fromChain.toUpperCase();
+  }
+
+  // netAmount minimal units থেকে human readable বানাই
+  if (lastQuote && quoteMeta) {
+    const netText = formatFromMinimal(lastQuote.netAmount, quoteMeta.token);
+
+    youReceiveEl.textContent = `${netText} ${quoteMeta.token}`;
+    youReceiveChainEl.textContent = toChain.toUpperCase();
+    receivePreviewEl.textContent = `${netText} ${quoteMeta.token}`;
+  } else {
+    youReceiveEl.textContent = "-";
+    youReceiveChainEl.textContent = toChain.toUpperCase();
+    receivePreviewEl.textContent = "–";
+  }
+
+  // destination wallet preview
+  if (destAddressEl.value.trim()) {
+    destinationWalletEl.textContent = shortenAddress(
+      destAddressEl.value.trim()
+    );
+  } else {
+    destinationWalletEl.textContent = "Not set";
+  }
+}
+
+function maybeEnableSwapButton() {
+  swapBtn.disabled = !(
+    lastQuote &&
+    quoteMeta &&
+    !isQuoting &&
+    !isSwapping
+  );
+}
+
+async function pingBackend() {
+  try {
+    const resp = await fetch("/api/health");
+    if (!resp.ok) throw new Error("status " + resp.status);
+    const data = (await resp.json()) as { ok?: boolean };
+    if (data.ok) {
+      backendStatusEl.textContent = "Backend: online";
+    } else {
+      backendStatusEl.textContent = "Backend: issue";
+    }
+  } catch {
+    backendStatusEl.textContent = "Backend: offline";
+  }
+}
+
+// ---- Wallet UI helpers ----
+
+function updateWalletUI() {
+  if (connectedWallet) {
+    const short = shortenAddress(connectedWallet.address);
+    const label =
+      connectedWallet.type === "metamask" ? "EVM" : "Solana";
+
+    openWalletModalBtn.textContent = `${label}: ${short}`;
+    sourceWalletEl.textContent = `${label} · ${short}`;
+    walletSummaryEl.textContent = `${label} · ${short}`;
+  } else {
+    openWalletModalBtn.textContent = "Connect wallet";
+    sourceWalletEl.textContent = "Not connected";
+    walletSummaryEl.textContent = "No wallet";
+  }
+}
+
+function openWalletModal() {
+  walletBackdropEl.classList.add("show");
+  walletModalEl.setAttribute("aria-hidden", "false");
+}
+
+function closeWalletModal() {
+  walletBackdropEl.classList.remove("show");
+  walletModalEl.setAttribute("aria-hidden", "true");
+}
+
+// ---- Wallet connect implementations ----
+
+async function connectMetamask() {
+  if (!w.ethereum) {
+    setStatus("MetaMask / EVM wallet not found in this browser.", "error");
+    return;
+  }
+  try {
+    const accounts = (await w.ethereum.request({
+      method: "eth_requestAccounts",
+    })) as string[];
+    const addr = accounts?.[0];
+    if (!addr) throw new Error("No address returned.");
+
+    connectedWallet = { type: "metamask", address: addr };
+    updateWalletUI();
+    setStatus("EVM wallet connected.", "ok");
+  } catch (err) {
+    console.error("Metamask connect error:", err);
+    setStatus("Failed to connect EVM wallet.", "error");
+  }
+}
+
+async function connectPhantom() {
+  const phantom = w.solana;
+  if (!phantom || !phantom.isPhantom) {
+    setStatus("Phantom wallet not found.", "error");
+    return;
+  }
+  try {
+    const resp = await phantom.connect();
+    const addr = resp?.publicKey?.toString?.();
+    if (!addr) throw new Error("No publicKey from Phantom.");
+
+    connectedWallet = { type: "phantom", address: addr };
+    updateWalletUI();
+    setStatus("Phantom wallet connected.", "ok");
+  } catch (err) {
+    console.error("Phantom connect error:", err);
+    setStatus("Failed to connect Phantom wallet.", "error");
+  }
+}
+
+// ---- Event wiring ----
+
+// flip chains
 flipBtn.addEventListener("click", () => {
   const from = fromChainEl.value;
   fromChainEl.value = toChainEl.value;
   toChainEl.value = from;
 
-  youSendChainEl.textContent = fromChainEl.value.toUpperCase();
-  youReceiveChainEl.textContent = toChainEl.value.toUpperCase();
+  clearQuoteState();
+  updateSummaryCard();
 });
 
-// -------- wallet modal logic --------
+// when user edits amount / token / chain => clear old quote
+[fromChainEl, toChainEl, tokenEl].forEach((el) =>
+  el.addEventListener("change", () => {
+    clearQuoteState();
+    updateSummaryCard();
+  })
+);
 
-function openWalletModal() {
-  walletBackdrop.classList.add("show");
-  walletModal.setAttribute("aria-hidden", "false");
-}
+amountEl.addEventListener("input", () => {
+  clearQuoteState();
+  updateSummaryCard();
+});
 
-function closeWalletModal() {
-  walletBackdrop.classList.remove("show");
-  walletModal.setAttribute("aria-hidden", "true");
-}
+destAddressEl.addEventListener("input", () => {
+  updateSummaryCard();
+});
 
-openWalletModalBtn.addEventListener("click", openWalletModal);
-closeWalletModalBtn.addEventListener("click", closeWalletModal);
-walletBackdrop.addEventListener("click", (e) => {
-  if (e.target === walletBackdrop) {
+// wallet modal open/close
+openWalletModalBtn.addEventListener("click", () => {
+  openWalletModal();
+});
+
+closeWalletModalBtn.addEventListener("click", () => {
+  closeWalletModal();
+});
+
+walletBackdropEl.addEventListener("click", (ev) => {
+  if (ev.target === walletBackdropEl) {
     closeWalletModal();
   }
 });
 
-// wallet connect helpers
-
-async function connectPhantom() {
-  try {
-    if (!w.solana || !w.solana.isPhantom) {
-      setStatus("Phantom wallet not found", "error");
-      return;
-    }
-    const resp = await w.solana.connect();
-    solanaWallet = resp.publicKey?.toString?.() ?? null;
-    if (solanaWallet) {
-      const sliced =
-        solanaWallet.slice(0, 4) +
-        "..." +
-        solanaWallet.slice(solanaWallet.length - 4);
-      sourceWalletEl.textContent = sliced;
-      walletSummaryEl.textContent = `Phantom · ${sliced}`;
-      setStatus("Phantom wallet connected ✅", "ok");
-      maybeEnableSwapButton();
-    }
-  } catch (err) {
-    console.error(err);
-    setStatus("Failed to connect Phantom", "error");
-  }
-}
-
-async function connectMetaMask() {
-  try {
-    if (!w.ethereum) {
-      setStatus("MetaMask / EVM wallet not found", "error");
-      return;
-    }
-    const accounts: string[] = await w.ethereum.request({
-      method: "eth_requestAccounts",
-    });
-    if (!accounts || accounts.length === 0) {
-      setStatus("No EVM account selected", "error");
-      return;
-    }
-    evmWallet = accounts[0];
-    const sliced =
-      evmWallet.slice(0, 6) + "..." + evmWallet.slice(evmWallet.length - 4);
-    sourceWalletEl.textContent = sliced;
-    walletSummaryEl.textContent = `MetaMask · ${sliced}`;
-    setStatus("EVM wallet connected ✅", "ok");
-    maybeEnableSwapButton();
-  } catch (err) {
-    console.error(err);
-    setStatus("Failed to connect EVM wallet", "error");
-  }
-}
-
-// wallet list click
-walletItems.forEach((btn) => {
-  btn.addEventListener("click", () => {
+// wallet choice
+walletItemBtns.forEach((btn) => {
+  btn.addEventListener("click", async () => {
     const type = btn.dataset.wallet;
     if (type === "metamask") {
-      void connectMetaMask();
+      await connectMetamask();
     } else if (type === "phantom") {
-      void connectPhantom();
+      await connectPhantom();
     } else {
-      setStatus("Wallet support coming soon", "error");
+      setStatus("WalletConnect support coming soon.", "default");
     }
     closeWalletModal();
   });
 });
 
-// -------- swap button enable logic --------
-
-function maybeEnableSwapButton() {
-  if (!lastQuote || !lastQuote.success) {
-    swapBtn.disabled = true;
-    return;
-  }
-  const fromChain = fromChainEl.value;
-  if (fromChain === "solana") {
-    swapBtn.disabled = !solanaWallet;
-  } else {
-    swapBtn.disabled = !evmWallet;
-  }
-}
-
-// update destination wallet label when user types
-destAddressEl.addEventListener("input", () => {
-  const dest = destAddressEl.value.trim();
-  if (dest) {
-    destinationWalletEl.textContent =
-      dest.slice(0, 4) + "..." + dest.slice(dest.length - 4);
-  } else {
-    destinationWalletEl.textContent = "Not set";
-  }
-});
-
-// -------- quote handling --------
+// ---- Quote handler ----
 
 quoteBtn.addEventListener("click", async () => {
-  const fromChain = fromChainEl.value;
-  const toChain = toChainEl.value;
-  const amountHuman = amountEl.value.trim();
+  const amountStr = amountEl.value.trim();
+  const amountNum = Number(amountStr);
 
-  if (!amountHuman || Number(amountHuman) <= 0) {
-    setStatus("Amount must be greater than 0", "error");
+  const fromChain = fromChainEl.value as ChainName;
+  const toChain = toChainEl.value as ChainName;
+  const token = tokenEl.value as TokenSymbol;
+
+  if (!amountStr || isNaN(amountNum) || amountNum <= 0) {
+    setStatus("Enter a valid positive amount.", "error");
     return;
   }
 
-  setStatus("Requesting bridge quote…");
-  swapBtn.disabled = true;
-  lastQuote = null;
-  youSendEl.textContent = "-";
-  youReceiveEl.textContent = "-";
-  receivePreviewEl.textContent = "–";
-  outputEl.textContent = "";
+  if (fromChain === toChain) {
+    setStatus("From & To chain must be different.", "error");
+    return;
+  }
+
+  clearQuoteState();
+  isQuoting = true;
+  quoteBtn.disabled = true;
+  quoteBtn.textContent = "Getting quote…";
+  setStatus("Contacting router backend for a quote…");
 
   try {
     const params = new URLSearchParams({
       fromChain,
       toChain,
-      amountIn: amountHuman, // human; backend converts to minimal & applies 0.5% fee
-      token: tokenEl.value,
+      // backend expects HUMAN units here (e.g. "10"), not smallest units
+      amountIn: amountStr,
+      token,
     });
 
-    const res = await fetch(`/api/quote?${params.toString()}`);
-    const data = (await res.json()) as QuoteApiResponse;
+    const resp = await fetch(`/api/quote?${params.toString()}`);
+    const data = (await resp.json()) as QuoteApiResponse;
 
-    if (!data.success) {
-      setStatus(data.error ?? "Bridge quote failed", "error");
-      return;
+    if (!resp.ok || !data.success) {
+      throw new Error(data.error || `Backend error: ${resp.status}`);
     }
 
     lastQuote = data;
+    console.log("Quote from backend:", data);
 
-    const symbol = tokenEl.value;
-    const sendHuman = Number(amountHuman);
-    const sendFormatted = isNaN(sendHuman)
-      ? amountHuman
-      : sendHuman.toLocaleString(undefined, {
-          maximumFractionDigits: 6,
-        });
+    quoteMeta = { token, fromChain, toChain, inputAmount: amountNum };
 
-    const netFormatted = formatFromMinimal(data.netAmount, symbol);
-
-    youSendEl.textContent = `${sendFormatted} ${symbol}`;
-    youReceiveEl.textContent = `${netFormatted} ${symbol}`;
-    youSendChainEl.textContent = fromChain.toUpperCase();
-    youReceiveChainEl.textContent = toChain.toUpperCase();
-    receivePreviewEl.textContent = `${netFormatted} ${symbol}`;
-
-    const rawQuote = (data.rawQuote ?? data.mayan ?? data) as any;
-    outputEl.textContent = JSON.stringify(rawQuote, null, 2);
-
+    outputEl.textContent = JSON.stringify(data.rawQuote ?? data, null, 2);
     setStatus("Quote received. You can now execute the bridge.", "ok");
+    updateSummaryCard();
+  } catch (err: any) {
+    console.error("Quote error:", err);
+    setStatus(
+      err?.message || "Failed to fetch quote from backend.",
+      "error"
+    );
+  } finally {
+    isQuoting = false;
+    quoteBtn.disabled = false;
+    quoteBtn.textContent = "Get bridge quote";
     maybeEnableSwapButton();
-  } catch (err) {
-    console.error(err);
-    setStatus("Failed to fetch quote from backend", "error");
   }
 });
 
-// -------- swap execution skeleton --------
+// ---- Swap handler (skeleton) ----
 
 swapBtn.addEventListener("click", async () => {
-  if (!lastQuote || !lastQuote.success) {
-    setStatus("No quote yet. Please Get bridge quote first.", "error");
+  if (!lastQuote || !quoteMeta) {
+    setStatus("No active quote. Get a quote first.", "error");
     return;
   }
 
-  const fromChain = fromChainEl.value;
-  const toChain = toChainEl.value;
-  const destInput = destAddressEl.value.trim();
-  const destinationWallet =
-    destInput ||
-    (toChain === "solana" ? solanaWallet : evmWallet) ||
-    null;
-
-  if (!destinationWallet) {
-    setStatus(
-      "Please connect a wallet or enter destination wallet address.",
-      "error"
-    );
+  if (!connectedWallet) {
+    setStatus("Connect a wallet before executing the bridge.", "error");
     return;
   }
 
-  destinationWalletEl.textContent =
-    destinationWallet.slice(0, 4) +
-    "..." +
-    destinationWallet.slice(destinationWallet.length - 4);
-
-  if (fromChain === "solana") {
-    setStatus(
-      "Solana swap execution TODO: implement backend with Mayan swap-sdk and sign via Phantom.",
-      "error"
-    );
-    return;
-  }
-
-  if (!evmWallet || !w.ethereum || !w.ethers) {
-    setStatus("EVM wallet not connected", "error");
-    return;
-  }
-
-  setStatus("Preparing EVM transaction (example)…");
+  isSwapping = true;
   swapBtn.disabled = true;
+  const originalLabel = swapBtn.textContent;
+  swapBtn.textContent = "Executing…";
+  setStatus("Preparing bridge transaction payload…");
 
   try {
-    // Future: call your backend to create EVM tx payload using Mayan swap-sdk
-    // const evmPayloadRes = await fetch("/api/evm-swap", { ... });
-    // const txPayload = await evmPayloadRes.json();
-    // const provider = new w.ethers.BrowserProvider(w.ethereum);
-    // const signer = await provider.getSigner();
-    // const tx = await signer.sendTransaction({ ...txPayload });
+    // TODO: wire real swap endpoint here (EVM / Solana)
+    // Example skeleton:
+    // const resp = await fetch("/api/evm-swap", { method: "POST", body: JSON.stringify({ ... }) });
+
+    console.log("Execute bridge with:", {
+      quoteMeta,
+      lastQuote,
+      wallet: connectedWallet,
+      destAddress: destAddressEl.value.trim() || null,
+    });
 
     setStatus(
       "Swap execution skeleton ready. Next step: wire /api/evm-swap with Mayan swap-sdk.",
       "ok"
     );
   } catch (err) {
-    console.error(err);
-    setStatus("Swap execution failed", "error");
+    console.error("Swap error:", err);
+    setStatus("Swap execution failed.", "error");
   } finally {
+    isSwapping = false;
+    swapBtn.textContent = originalLabel || "Execute bridge";
     maybeEnableSwapButton();
   }
 });
+
+// ---- Initial bootstrap ----
+
+updateSummaryCard();
+updateWalletUI();
+pingBackend();
