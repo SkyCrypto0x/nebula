@@ -1,6 +1,6 @@
 // public/app.ts
 
-declare const confetti: any;
+// declare const confetti: any;
 
 // ---- Types ----
 
