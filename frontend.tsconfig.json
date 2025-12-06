@@ -6,7 +6,8 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "allowJs": false
+    "allowJs": false,
+    "outDir": "./public"
   },
   "include": ["public/app.ts"],
   "exclude": ["node_modules"]

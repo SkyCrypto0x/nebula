@@ -1,5 +1,7 @@
 // public/app.ts
 
+declare const confetti: any;
+
 // ---- Types ----
 
 type ChainName = "solana" | "ethereum" | "bsc" | "arbitrum" | "base";
@@ -11,6 +13,7 @@ type QuoteApiResponse = {
   feeAmount?: string;
   error?: string;
   rawQuote?: any;
+  routes?: any[]; // optional route list from backend
 };
 
 type StatusKind = "default" | "ok" | "error";
@@ -19,6 +22,14 @@ type ConnectedWallet = {
   type: "metamask" | "phantom";
   address: string;
 };
+
+interface BridgeHistoryEntry {
+  time: number;
+  amount: number | undefined;
+  from: string;
+  to: string;
+  tx: any;
+}
 
 // small decimal map (UI side only)
 const TOKEN_DECIMALS: Record<TokenSymbol, number> = {
@@ -37,64 +48,80 @@ type AnyWindow = Window &
 
 const w = window as AnyWindow;
 
-// ---- DOM refs ----
+// ছোট হেল্পার – element নাও, কিন্তু না থাকলে null রিটার্ন করো
+function byId<T extends HTMLElement>(id: string): T | null {
+  return document.getElementById(id) as T | null;
+}
 
-const backendStatusEl = document.getElementById(
-  "backendStatus"
-) as HTMLSpanElement;
+// required element helper – না থাকলে error
+function mustGet<T extends HTMLElement>(id: string): T {
+  const el = byId<T>(id);
+  if (!el) {
+    throw new Error(`Required element #${id} not found`);
+  }
+  return el;
+}
 
-const fromChainEl = document.getElementById("fromChain") as HTMLSelectElement;
-const toChainEl = document.getElementById("toChain") as HTMLSelectElement;
-const flipBtn = document.getElementById("flipChains") as HTMLButtonElement;
+// ---- DOM refs (assigned inside initUI) ----
 
-const tokenEl = document.getElementById("token") as HTMLSelectElement;
-const amountEl = document.getElementById("amount") as HTMLInputElement;
-const destAddressEl = document.getElementById(
-  "destAddress"
-) as HTMLInputElement;
+let backendStatusEl: HTMLSpanElement;
 
-const quoteBtn = document.getElementById("quoteBtn") as HTMLButtonElement;
-const swapBtn = document.getElementById("swapBtn") as HTMLButtonElement;
+// tabs + panels
+let bridgeTabBtn: HTMLButtonElement;
+let historyTabBtn: HTMLButtonElement;
+let bridgePanelWrapperEl: HTMLDivElement;
+let historyPanelEl: HTMLDivElement;
+let historyListEl: HTMLDivElement;
 
-const statusEl = document.getElementById("status") as HTMLDivElement;
-const outputEl = document.getElementById("output") as HTMLPreElement;
-const receivePreviewEl = document.getElementById(
-  "receivePreview"
-) as HTMLSpanElement;
+let fromChainEl: HTMLSelectElement;
+let toChainEl: HTMLSelectElement;
+let flipBtn: HTMLButtonElement;
+
+let tokenEl: HTMLSelectElement;
+let amountEl: HTMLInputElement;
+let destAddressEl: HTMLInputElement;
+
+let quoteBtn: HTMLButtonElement;
+let swapBtn: HTMLButtonElement;
+
+let statusEl: HTMLDivElement;
+let outputEl: HTMLPreElement;
+let receivePreviewEl: HTMLSpanElement;
 
 // summary card
-const youSendEl = document.getElementById("youSend") as HTMLDivElement;
-const youSendChainEl = document.getElementById(
-  "youSendChain"
-) as HTMLDivElement;
-const youReceiveEl = document.getElementById("youReceive") as HTMLDivElement;
-const youReceiveChainEl = document.getElementById(
-  "youReceiveChain"
-) as HTMLDivElement;
-const sourceWalletEl = document.getElementById(
-  "sourceWallet"
-) as HTMLSpanElement;
-const destinationWalletEl = document.getElementById(
-  "destinationWallet"
-) as HTMLSpanElement;
-const walletSummaryEl = document.getElementById(
-  "walletSummary"
-) as HTMLSpanElement;
+let youSendEl: HTMLDivElement;
+let youSendChainEl: HTMLDivElement;
+let youReceiveEl: HTMLDivElement;
+let youReceiveChainEl: HTMLDivElement;
+let sourceWalletEl: HTMLSpanElement;
+let destinationWalletEl: HTMLSpanElement;
+let walletSummaryEl: HTMLSpanElement;
 
 // wallet modal
-const openWalletModalBtn = document.getElementById(
-  "openWalletModal"
-) as HTMLButtonElement;
-const closeWalletModalBtn = document.getElementById(
-  "closeWalletModal"
-) as HTMLButtonElement;
-const walletBackdropEl = document.getElementById(
-  "walletBackdrop"
-) as HTMLDivElement;
-const walletModalEl = document.getElementById("walletModal") as HTMLDivElement;
-const walletItemBtns = document.querySelectorAll<HTMLButtonElement>(
-  ".wallet-item"
-);
+let openWalletModalBtn: HTMLButtonElement;
+let closeWalletModalBtn: HTMLButtonElement;
+let walletBackdropEl: HTMLDivElement;
+let walletModalEl: HTMLDivElement;
+let walletItemBtns: NodeListOf<HTMLButtonElement>;
+
+// NEW DOM ELEMENTS
+let slippageEl: HTMLInputElement;
+let mevToggleEl: HTMLInputElement;
+let refuelToggleEl: HTMLInputElement;
+
+let routeFiltersEl: HTMLDivElement;
+let routeContainerEl: HTMLDivElement;
+let routeListEl: HTMLDivElement;
+
+let minReceiveBoxEl: HTMLDivElement;
+let minReceiveValueEl: HTMLSpanElement;
+
+let microcopyEl: HTMLDivElement;
+
+let progressBarEl: HTMLDivElement;
+
+// Route filter buttons (Fastest / Cheapest / Safest)
+let routeFilterButtons: NodeListOf<HTMLButtonElement>;
 
 // ---- State ----
 
@@ -112,6 +139,10 @@ let quoteMeta:
   | null = null;
 
 let connectedWallet: ConnectedWallet | null = null;
+
+// --- NEW STATE ---
+let selectedRouteType: "fastest" | "cheapest" | "safest" = "cheapest";
+let bridgeHistory: BridgeHistoryEntry[] = [];
 
 // ---- Helper functions ----
 
@@ -137,6 +168,11 @@ function clearQuoteState() {
   youReceiveChainEl.textContent = "-";
   outputEl.textContent = "";
   swapBtn.disabled = true;
+
+  // hide routes + min receive
+  routeContainerEl?.classList.add("hidden");
+  routeFiltersEl?.classList.add("hidden");
+  minReceiveBoxEl?.classList.add("hidden");
 }
 
 // smallest-units -> human readable (আগের কোড থেকে কপি করা লজিক)
@@ -300,176 +336,479 @@ async function connectPhantom() {
   }
 }
 
-// ---- Event wiring ----
+// ---- Route selection ----
 
-// flip chains
-flipBtn.addEventListener("click", () => {
-  const from = fromChainEl.value;
-  fromChainEl.value = toChainEl.value;
-  toChainEl.value = from;
+function updateRouteSelection(type: "fastest" | "cheapest" | "safest") {
+  selectedRouteType = type;
 
-  clearQuoteState();
-  updateSummaryCard();
-});
-
-// when user edits amount / token / chain => clear old quote
-[fromChainEl, toChainEl, tokenEl].forEach((el) =>
-  el.addEventListener("change", () => {
-    clearQuoteState();
-    updateSummaryCard();
-  })
-);
-
-amountEl.addEventListener("input", () => {
-  clearQuoteState();
-  updateSummaryCard();
-});
-
-destAddressEl.addEventListener("input", () => {
-  updateSummaryCard();
-});
-
-// wallet modal open/close
-openWalletModalBtn.addEventListener("click", () => {
-  openWalletModal();
-});
-
-closeWalletModalBtn.addEventListener("click", () => {
-  closeWalletModal();
-});
-
-walletBackdropEl.addEventListener("click", (ev) => {
-  if (ev.target === walletBackdropEl) {
-    closeWalletModal();
-  }
-});
-
-// wallet choice
-walletItemBtns.forEach((btn) => {
-  btn.addEventListener("click", async () => {
-    const type = btn.dataset.wallet;
-    if (type === "metamask") {
-      await connectMetamask();
-    } else if (type === "phantom") {
-      await connectPhantom();
-    } else {
-      setStatus("WalletConnect support coming soon.", "default");
-    }
-    closeWalletModal();
+  routeFilterButtons.forEach((btn) => {
+    const filter = btn.dataset.filter as
+      | "fastest"
+      | "cheapest"
+      | "safest"
+      | undefined;
+    btn.classList.toggle("active", filter === type);
   });
-});
 
-// ---- Quote handler ----
+  // Re-run quote if user switches route filter
+  if (lastQuote) {
+    fetchQuote();
+  }
+}
 
-quoteBtn.addEventListener("click", async () => {
+// ---- Quote logic extracted into a function ----
+
+async function fetchQuote() {
   const amountStr = amountEl.value.trim();
   const amountNum = Number(amountStr);
 
-  const fromChain = fromChainEl.value as ChainName;
-  const toChain = toChainEl.value as ChainName;
-  const token = tokenEl.value as TokenSymbol;
-
-  if (!amountStr || isNaN(amountNum) || amountNum <= 0) {
-    setStatus("Enter a valid positive amount.", "error");
+  if (!amountNum || amountNum <= 0) {
+    setStatus("Enter a valid amount", "error");
     return;
   }
 
-  if (fromChain === toChain) {
-    setStatus("From & To chain must be different.", "error");
-    return;
-  }
-
-  clearQuoteState();
   isQuoting = true;
-  quoteBtn.disabled = true;
-  quoteBtn.textContent = "Getting quote…";
-  setStatus("Contacting router backend for a quote…");
+  maybeEnableSwapButton();
+
+  setStatus("Fetching best cross-chain route...");
+  if (progressBarEl) progressBarEl.style.width = "25%";
 
   try {
     const params = new URLSearchParams({
-      fromChain,
-      toChain,
-      // backend expects HUMAN units here (e.g. "10"), not smallest units
+      fromChain: fromChainEl.value,
+      toChain: toChainEl.value,
+      token: tokenEl.value,
       amountIn: amountStr,
-      token,
+      slippage: slippageEl.value,
+      routeType: selectedRouteType,
+      mev: mevToggleEl.checked ? "1" : "0",
+      refuel: refuelToggleEl.checked ? "1" : "0",
     });
 
-    const resp = await fetch(`/api/quote?${params.toString()}`);
-    const data = (await resp.json()) as QuoteApiResponse;
+    const res = await fetch(`/api/quote?${params.toString()}`);
+    const data = (await res.json()) as QuoteApiResponse & {
+      routes?: any[];
+    };
 
-    if (!resp.ok || !data.success) {
-      throw new Error(data.error || `Backend error: ${resp.status}`);
-    }
+    if (!data.success) throw new Error(data.error || "Quote failed");
 
     lastQuote = data;
-    console.log("Quote from backend:", data);
 
-    quoteMeta = { token, fromChain, toChain, inputAmount: amountNum };
+    // keep quoteMeta in sync with latest successful quote
+    quoteMeta = {
+      token: tokenEl.value as TokenSymbol,
+      fromChain: fromChainEl.value as ChainName,
+      toChain: toChainEl.value as ChainName,
+      inputAmount: amountNum,
+    };
+
+    // Update receive preview from minimal units
+    const decimals = TOKEN_DECIMALS[tokenEl.value as TokenSymbol];
+    const humanNet = Number(data.netAmount) / Math.pow(10, decimals);
+    const minReceived =
+      humanNet * (1 - Number(slippageEl.value || "0") / 100);
+
+    receivePreviewEl.textContent = `${humanNet.toFixed(
+      6
+    )} ${tokenEl.value}`;
+
+    if (minReceiveBoxEl && minReceiveValueEl) {
+      minReceiveBoxEl.classList.remove("hidden");
+      minReceiveValueEl.textContent = `${minReceived.toFixed(
+        6
+      )} ${tokenEl.value}`;
+    }
+
+    microcopyEl.textContent = `Includes all bridge fees & est. gas.`;
+
+    // Render route list
+    renderRoutes(data.routes || []);
 
     outputEl.textContent = JSON.stringify(data.rawQuote ?? data, null, 2);
-    setStatus("Quote received. You can now execute the bridge.", "ok");
     updateSummaryCard();
+
+    if (progressBarEl) progressBarEl.style.width = "60%";
+    setStatus("Route ready. Execute when you’re ready.", "ok");
+
+    maybeEnableSwapButton();
   } catch (err: any) {
-    console.error("Quote error:", err);
-    setStatus(
-      err?.message || "Failed to fetch quote from backend.",
-      "error"
-    );
+    console.error(err);
+    setStatus(err.message ?? "Failed to get quote", "error");
   } finally {
     isQuoting = false;
-    quoteBtn.disabled = false;
-    quoteBtn.textContent = "Get bridge quote";
     maybeEnableSwapButton();
   }
-});
+}
 
-// ---- Swap handler (skeleton) ----
+// ---- Route renderer ----
 
-swapBtn.addEventListener("click", async () => {
-  if (!lastQuote || !quoteMeta) {
-    setStatus("No active quote. Get a quote first.", "error");
+function renderRoutes(routes: any[]) {
+  if (!routeContainerEl || !routeListEl) return;
+
+  if (!routes || routes.length === 0) {
+    routeContainerEl.classList.add("hidden");
+    routeFiltersEl?.classList.add("hidden");
+    routeListEl.innerHTML = "";
     return;
   }
 
-  if (!connectedWallet) {
-    setStatus("Connect a wallet before executing the bridge.", "error");
+  routeContainerEl.classList.remove("hidden");
+  routeFiltersEl?.classList.remove("hidden");
+
+  routeListEl.innerHTML = routes
+    .map(
+      (r: any) => `
+      <div class="route-row">
+        <div class="route-left">
+          <span>${r.protocol}</span>
+          <small>${r.estimatedTime} sec</small>
+        </div>
+        <div class="route-right">
+          <span>${r.netHuman} ${tokenEl.value}</span>
+          <small>Fee: ${r.totalFee}</small>
+        </div>
+      </div>`
+    )
+    .join("");
+}
+
+// ---- Swap handler (updated) ----
+
+function celebrateBridge() {
+  confetti({
+    particleCount: 150,
+    spread: 70,
+    origin: { y: 0.65 },
+    scalar: 0.9,
+    colors: ["#22d3ee", "#8b5cf6", "#ec4899", "#22c55e"],
+  });
+}
+
+// ---- History panel render ----
+
+function renderHistoryPanel() {
+  historyListEl.innerHTML = bridgeHistory
+    .map(
+      (h: BridgeHistoryEntry) => `
+      <div class="history-item">
+        <div>${new Date(h.time).toLocaleTimeString()}</div>
+        <div>${h.amount ?? "-"} ${tokenEl.value}</div>
+        <div>${h.from} → ${h.to}</div>
+        <div>Tx: ${
+          h.tx?.hash ? h.tx.hash.slice(0, 8) + "…" : "--------"
+        }</div>
+      </div>`
+    )
+    .join("");
+}
+
+// ---- Custom cursor init – safe ভাবে ----
+
+function initCustomCursor() {
+  // যদি pointer coarse হয় (touch device), কিছুই করবো না
+  if (!window.matchMedia || !window.matchMedia("(pointer: fine)").matches) {
     return;
   }
 
-  isSwapping = true;
-  swapBtn.disabled = true;
-  const originalLabel = swapBtn.textContent;
-  swapBtn.textContent = "Executing…";
-  setStatus("Preparing bridge transaction payload…");
+  const cursor = byId<HTMLDivElement>("customCursor");
+  if (!cursor) {
+    // element না থাকলে system cursor hide করবো না
+    console.warn("Custom cursor element not found");
+    return;
+  }
 
-  try {
-    // TODO: wire real swap endpoint here (EVM / Solana)
-    // Example skeleton:
-    // const resp = await fetch("/api/evm-swap", { method: "POST", body: JSON.stringify({ ... }) });
+  // cursor visible করো
+  cursor.style.display = "block";
 
-    console.log("Execute bridge with:", {
-      quoteMeta,
-      lastQuote,
-      wallet: connectedWallet,
-      destAddress: destAddressEl.value.trim() || null,
+  // এখনই body-তে class যোগ করো (CSS তখন default cursor hide করবে)
+  // document.body.classList.add("custom-cursor-enabled");
+
+  window.addEventListener("mousemove", (e) => {
+    cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+  });
+
+  window.addEventListener("mousedown", () => {
+    cursor.style.transform += " scale(0.85)";
+  });
+
+  window.addEventListener("mouseup", () => {
+    cursor.style.transform = cursor.style.transform.replace(" scale(0.85)", "");
+  });
+}
+
+// ---- Slippage presets + custom ----
+
+function setupSlippageControls() {
+  const input = slippageEl;
+  if (!input) return;
+
+  const buttons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".slip-btn")
+  );
+
+  const customBtn = buttons.find((b) =>
+    b.classList.contains("slip-btn-custom")
+  );
+
+  const setActive = (btn: HTMLButtonElement) => {
+    buttons.forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+  };
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const isCustom = btn.classList.contains("slip-btn-custom");
+
+      if (isCustom) {
+        // Custom mode: keep whatever user types
+        setActive(btn);
+        input.classList.remove("hidden");
+        input.focus();
+      } else {
+        // Preset mode
+        const v = btn.dataset.value || "0.5";
+        input.value = v;
+        input.classList.add("hidden");
+        setActive(btn);
+      }
     });
+  });
 
-    setStatus(
-      "Swap execution skeleton ready. Next step: wire /api/evm-swap with Mayan swap-sdk.",
-      "ok"
-    );
-  } catch (err) {
-    console.error("Swap error:", err);
-    setStatus("Swap execution failed.", "error");
-  } finally {
-    isSwapping = false;
-    swapBtn.textContent = originalLabel || "Execute bridge";
+  // যদি custom ইনপুটে মান টাইপ করে, ওটা custom বোঝাতে
+  input.addEventListener("input", () => {
+    if (customBtn) {
+      setActive(customBtn);
+      input.classList.remove("hidden");
+    }
+  });
+}
+
+// ---- UI init (all DOM wiring এখানে) ----
+
+function initUI() {
+  // Required elements
+  backendStatusEl = mustGet<HTMLSpanElement>("backendStatus");
+
+  // tabs & panels
+  bridgeTabBtn = mustGet<HTMLButtonElement>("bridgeBtn");
+  historyTabBtn = mustGet<HTMLButtonElement>("historyBtn");
+  bridgePanelWrapperEl = mustGet<HTMLDivElement>("bridgePanel");
+  historyPanelEl = mustGet<HTMLDivElement>("historyPanel");
+  historyListEl = mustGet<HTMLDivElement>("historyList");
+
+  fromChainEl = mustGet<HTMLSelectElement>("fromChain");
+  toChainEl = mustGet<HTMLSelectElement>("toChain");
+  flipBtn = mustGet<HTMLButtonElement>("flipChains");
+
+  tokenEl = mustGet<HTMLSelectElement>("token");
+  amountEl = mustGet<HTMLInputElement>("amount");
+  destAddressEl = mustGet<HTMLInputElement>("destAddress");
+
+  quoteBtn = mustGet<HTMLButtonElement>("quoteBtn");
+  swapBtn = mustGet<HTMLButtonElement>("swapBtn");
+
+  statusEl = mustGet<HTMLDivElement>("status");
+  outputEl = mustGet<HTMLPreElement>("output");
+  receivePreviewEl = mustGet<HTMLSpanElement>("receivePreview");
+
+  youSendEl = mustGet<HTMLDivElement>("youSend");
+  youSendChainEl = mustGet<HTMLDivElement>("youSendChain");
+  youReceiveEl = mustGet<HTMLDivElement>("youReceive");
+  youReceiveChainEl = mustGet<HTMLDivElement>("youReceiveChain");
+  sourceWalletEl = mustGet<HTMLSpanElement>("sourceWallet");
+  destinationWalletEl = mustGet<HTMLSpanElement>("destinationWallet");
+  walletSummaryEl = mustGet<HTMLSpanElement>("walletSummary");
+
+  openWalletModalBtn = mustGet<HTMLButtonElement>("openWalletModal");
+  closeWalletModalBtn = mustGet<HTMLButtonElement>("closeWalletModal");
+  walletBackdropEl = mustGet<HTMLDivElement>("walletBackdrop");
+  walletModalEl = mustGet<HTMLDivElement>("walletModal");
+
+  slippageEl = mustGet<HTMLInputElement>("slippage");
+  mevToggleEl = mustGet<HTMLInputElement>("mevToggle");
+  refuelToggleEl = mustGet<HTMLInputElement>("refuelToggle");
+
+  routeFiltersEl = mustGet<HTMLDivElement>("routeFilters");
+  routeContainerEl = mustGet<HTMLDivElement>("routeContainer");
+  routeListEl = mustGet<HTMLDivElement>("routeList");
+
+  minReceiveBoxEl = mustGet<HTMLDivElement>("minReceive");
+  minReceiveValueEl = mustGet<HTMLSpanElement>("minReceiveValue");
+
+  microcopyEl = mustGet<HTMLDivElement>("microcopy");
+
+  progressBarEl = mustGet<HTMLDivElement>("progressBar");
+
+  // NodeLists
+  walletItemBtns =
+    document.querySelectorAll<HTMLButtonElement>(".wallet-item");
+  routeFilterButtons =
+    document.querySelectorAll<HTMLButtonElement>(".route-filter");
+
+  // ---- Event wiring ----
+
+  // flip chains
+  flipBtn.addEventListener("click", () => {
+    const from = fromChainEl.value;
+    fromChainEl.value = toChainEl.value;
+    toChainEl.value = from;
+
+    clearQuoteState();
+    updateSummaryCard();
+  });
+
+  // when user edits amount / token / chain => clear old quote
+  [fromChainEl, toChainEl, tokenEl].forEach((el) =>
+    el.addEventListener("change", () => {
+      clearQuoteState();
+      updateSummaryCard();
+    })
+  );
+
+  amountEl.addEventListener("input", () => {
+    clearQuoteState();
+    updateSummaryCard();
+  });
+
+  destAddressEl.addEventListener("input", () => {
+    updateSummaryCard();
+  });
+
+  // wallet modal open/close
+  openWalletModalBtn.addEventListener("click", () => {
+    openWalletModal();
+  });
+
+  closeWalletModalBtn.addEventListener("click", () => {
+    closeWalletModal();
+  });
+
+  walletBackdropEl.addEventListener("click", (ev) => {
+    if (ev.target === walletBackdropEl) {
+      closeWalletModal();
+    }
+  });
+
+  // wallet choice
+  walletItemBtns.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const type = btn.dataset.wallet;
+      if (type === "metamask") {
+        await connectMetamask();
+      } else if (type === "phantom") {
+        await connectPhantom();
+      } else {
+        setStatus("WalletConnect support coming soon.", "default");
+      }
+      closeWalletModal();
+    });
+  });
+
+  // Route filter buttons
+  routeFilterButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const filter = (btn.dataset.filter ||
+        "cheapest") as "fastest" | "cheapest" | "safest";
+      updateRouteSelection(filter);
+    });
+  });
+
+  // Quote button
+  quoteBtn.addEventListener("click", () => {
+    fetchQuote();
+  });
+
+  // Swap handler
+  swapBtn.addEventListener("click", async () => {
+    if (!lastQuote) {
+      setStatus("Get a quote first", "error");
+      return;
+    }
+
+    isSwapping = true;
     maybeEnableSwapButton();
+
+    setStatus("Preparing transaction...");
+    if (progressBarEl) progressBarEl.style.width = "30%";
+
+    try {
+      const payload = {
+        quote: lastQuote,
+        wallet: connectedWallet,
+        dest: destAddressEl.value.trim(),
+        mev: mevToggleEl.checked,
+        refuel: refuelToggleEl.checked,
+      };
+
+      const res = await fetch("/api/swap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const tx = await res.json();
+      if (progressBarEl) progressBarEl.style.width = "70%";
+      setStatus("Transaction submitted...");
+
+      // Save history
+      bridgeHistory.push({
+        time: Date.now(),
+        amount: quoteMeta?.inputAmount,
+        from: fromChainEl.value,
+        to: toChainEl.value,
+        tx,
+      });
+
+      if (progressBarEl) progressBarEl.style.width = "100%";
+      setStatus("Bridge completed!", "ok");
+
+      celebrateBridge();
+    } catch (err) {
+      console.error(err);
+      setStatus("Swap failed", "error");
+    } finally {
+      isSwapping = false;
+      maybeEnableSwapButton();
+    }
+  });
+
+  // ---- Tabs: Bridge / History ----
+
+  bridgeTabBtn.addEventListener("click", () => {
+    bridgeTabBtn.classList.add("active");
+    historyTabBtn.classList.remove("active");
+
+    bridgePanelWrapperEl.classList.remove("hidden");
+    historyPanelEl.classList.add("hidden");
+  });
+
+  historyTabBtn.addEventListener("click", () => {
+    historyTabBtn.classList.add("active");
+    bridgeTabBtn.classList.remove("active");
+
+    historyPanelEl.classList.remove("hidden");
+    bridgePanelWrapperEl.classList.add("hidden");
+
+    renderHistoryPanel();
+  });
+
+  // ---- Slippage presets ----
+  setupSlippageControls();
+}
+
+// ---- DOM content ready হলে init ----
+
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    initUI();
+    updateSummaryCard();
+    updateWalletUI();
+    pingBackend();
+    initCustomCursor();
+    console.log("Soul Swap UI initialized");
+  } catch (err) {
+    console.error("Initialization error:", err);
+    // কোনো কারণে crash হলে হলেও default cursor ফিরে পাওয়ার জন্য
+    document.body.classList.remove("custom-cursor-enabled");
   }
 });
-
-// ---- Initial bootstrap ----
-
-updateSummaryCard();
-updateWalletUI();
-pingBackend();

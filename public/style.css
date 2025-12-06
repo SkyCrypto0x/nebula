@@ -1,19 +1,18 @@
 /* =========================================================
    SOUL SWAP · ULTRA PREMIUM NEON / GLASSMORPHIC THEME
-   Works with your existing index.html structure.
-   =======================================================*/
+   Rhino.fi–style slim bridge card
+   ======================================================= */
 
 /* ---------- Global ---------- */
 
 :root {
-  /* Core colors */
   --bg: #020617;
   --bg-elevated: rgba(10, 16, 34, 0.96);
   --bg-card: rgba(11, 17, 35, 0.96);
-  --bg-glass: rgba(15, 23, 42, 0.78);
+  --bg-glass: rgba(15, 23, 42, 0.85);
 
   --border-subtle: rgba(148, 163, 184, 0.24);
-  --border-strong: rgba(148, 163, 184, 0.45);
+  --border-strong: rgba(148, 163, 184, 0.55);
 
   --accent: #22d3ee;
   --accent-2: #8b5cf6;
@@ -54,20 +53,20 @@ body {
   overflow-x: hidden;
 }
 
-/* subtle animated space noise */
+/* subtle animated noise */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.18;
+  opacity: 0.16;
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
   animation: noiseShift 18s linear infinite alternate;
   z-index: 0;
 }
 
-/* ---------- Page shell & background ---------- */
+/* ---------- Page shell & background blobs ---------- */
 
 .page-shell {
   position: relative;
@@ -80,7 +79,6 @@ body::before {
   z-index: 1;
 }
 
-/* glowing gradient blobs behind content */
 .bg-orbit {
   position: fixed;
   border-radius: 999px;
@@ -88,7 +86,6 @@ body::before {
   opacity: 0.46;
   z-index: 0;
   pointer-events: none;
-  transform: translate3d(0, 0, 0);
   animation: floatOrbit 26s ease-in-out infinite alternate;
 }
 
@@ -115,30 +112,25 @@ body::before {
 
 /* ---------- Top bar ---------- */
 
-/* TOPBAR LAYOUT */
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;   /* brand-block left, topbar-right right */
+  justify-content: space-between;
   padding: 16px 24px;
-  position: relative;
-  z-index: 10;
-
-  gap: 18px;
   margin-bottom: 28px;
   border-radius: var(--radius-lg);
-  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.86), transparent);
+  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), transparent);
   border: 1px solid rgba(31, 41, 55, 0.9);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(26px);
+  z-index: 10;
+  gap: 18px;
 }
 
 .brand-block {
   display: flex;
   align-items: center;
   gap: 14px;
-
-  /* left side gets flexible space */
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -194,8 +186,6 @@ body::before {
   display: flex;
   align-items: center;
   gap: 10px;
-
-  /* ensure it stays on same row & doesn’t shrink oddly */
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -222,6 +212,16 @@ body::before {
   border-radius: 999px;
   background: #22c55e;
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.3);
+}
+
+.theme-btn {
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  font-size: 12px;
 }
 
 .wallet-btn {
@@ -266,59 +266,83 @@ body::before {
 
 /* ---------- Main layout ---------- */
 
+/* Rhino-style: single slim card in center */
 .bridge-layout {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 3.1fr) minmax(0, 2.2fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-/* ---------- Left primary card ---------- */
+/* Hide right summary card panel; we’ll show only main card */
+.summary-card-container {
+  display: none !important;
+}
+
+/* ---------- Bridge card ---------- */
 
 .bridge-panel {
   position: relative;
   background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.92)),
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%);
-  border-radius: var(--radius-2xl);
+    radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.22), transparent 60%),
+    linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+  border-radius: 26px;
   border: 1px solid rgba(148, 163, 184, 0.55);
-  box-shadow: var(--shadow-soft), var(--shadow-glow-cyan);
-  padding: 22px 22px 20px;
-  overflow: hidden;
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.95),
+    0 0 40px rgba(56, 189, 248, 0.5);
+  padding: 22px 22px 18px;
+  overflow: visible;
   backdrop-filter: blur(26px);
 }
 
-.bridge-panel::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  border: 1px solid rgba(248, 250, 252, 0.02);
-  pointer-events: none;
-}
-
-.bridge-panel::after {
-  content: "";
-  position: absolute;
-  inset: 25% -40%;
-  background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.16), transparent 60%);
-  opacity: 0.7;
-  filter: blur(20px);
-  pointer-events: none;
-}
-
 .bridge-heading {
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .bridge-subheading {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
+
+/* Tabs */
+.main-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  padding-bottom: 8px;
+}
+
+.tab {
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  transition: 0.2s ease;
+}
+
+.tab:hover {
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--text-primary);
+}
+
+.tab.active {
+  background: var(--accent-strong);
+  color: #0b1120;
+  font-weight: 600;
+}
+
+/* Send / Receive labels */
 
 .field-group-label {
   font-size: 10px;
@@ -328,18 +352,18 @@ body::before {
   margin-bottom: 8px;
 }
 
-/* chain selectors */
+/* Chain selectors row */
 
 .chain-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) 44px minmax(0, 1.3fr);
+  grid-template-columns: minmax(0, 1.25fr) 44px minmax(0, 1.25fr);
   gap: 10px;
   margin-bottom: 18px;
 }
 
 .select-shell {
   position: relative;
-  background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.96));
+  background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
   border-radius: 16px;
   padding: 7px 12px;
   border: 1px solid rgba(148, 163, 184, 0.55);
@@ -347,16 +371,7 @@ body::before {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.95);
-}
-
-.select-shell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid rgba(15, 23, 42, 0.8);
-  pointer-events: none;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.98);
 }
 
 .select-shell label {
@@ -382,87 +397,95 @@ body::before {
   color: var(--text-muted);
 }
 
+/* Chain logos */
+
+.chain-logo {
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  vertical-align: middle;
+  opacity: 0.9;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* Chain flip button */
+
 .flip-btn {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(148, 163, 184, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.65);
   background:
-    radial-gradient(circle at 30% 0, rgba(148, 163, 184, 0.7), #020617);
+    radial-gradient(circle at 30% 0, rgba(148, 163, 184, 0.8), #020617);
   color: #e5e7eb;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.98);
   transition:
     transform 0.3s ease,
     box-shadow 0.16s ease,
-    border-color 0.16s ease,
-    background-position 0.4s ease;
-  background-size: 180% 180%;
-  background-position: 20% 0%;
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.98);
+    border-color 0.16s ease;
 }
 
 .flip-btn:hover {
   transform: rotate(180deg);
-  background-position: 80% 100%;
   box-shadow: 0 0 32px rgba(129, 140, 248, 0.9);
   border-color: rgba(129, 140, 248, 0.95);
 }
 
-/* send / receive blocks */
+/* Send / Receive card sections */
 
 .card-section {
   position: relative;
   background: var(--bg-glass);
-  border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  padding: 14px 14px 10px;
-  margin-bottom: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  padding: 14px 16px 10px;
+  margin-bottom: 10px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(20px);
-}
-
-.card-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.12), transparent 60%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.card-section:hover::before {
-  opacity: 1;
+  backdrop-filter: blur(22px);
 }
 
 .card-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .card-section-header span {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   color: var(--text-muted);
 }
+
+/* add FROM / TO labels */
+.bridge-panel .card-section:nth-of-type(1) .card-section-header span:first-child::before {
+  content: "From · ";
+  font-weight: 500;
+}
+
+.bridge-panel .card-section:nth-of-type(2) .card-section-header span:first-child::before {
+  content: "To · ";
+  font-weight: 500;
+}
+
+/* Token chip */
 
 .token-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 6px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(15, 23, 42, 0.98);
   border: 1px solid rgba(148, 163, 184, 0.65);
   font-size: 12px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.95);
 }
 
 .token-chip select {
@@ -473,13 +496,14 @@ body::before {
   outline: none;
 }
 
-/* amount row */
+/* Amount row */
 
 .amount-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-top: 4px;
 }
 
 .amount-input {
@@ -488,10 +512,9 @@ body::before {
   border: none;
   color: #f9fafb;
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 600;
   outline: none;
-
-  /* prevent input + placeholder from pushing outside */
+  text-align: right;
   min-width: 0;
 }
 
@@ -502,20 +525,14 @@ body::before {
 .max-btn {
   border-radius: var(--radius-pill);
   border: none;
-  padding: 6px 13px;
+  padding: 6px 12px;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   cursor: pointer;
-  background: rgba(55, 65, 81, 0.95);
+  background: rgba(55, 65, 81, 0.96);
   color: #e5e7eb;
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.85);
-  transition: background 0.16s ease, transform 0.12s ease;
-}
-
-.max-btn:hover {
-  background: rgba(75, 85, 99, 1);
-  transform: translateY(-1px);
 }
 
 .helper-text {
@@ -524,40 +541,94 @@ body::before {
   margin-top: 6px;
 }
 
-/* arrow between send/receive */
+.microcopy {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Min receive highlight */
+
+.min-receive {
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius-lg);
+  color: var(--accent-green);
+  font-size: 12px;
+}
+
+/* Nice value for receive */
+
+#receivePreview {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Flow arrow between send/receive */
 
 .flow-arrow {
   display: flex;
   justify-content: center;
-  margin: 12px 0;
+  margin: 14px 0;
 }
 
 .flow-arrow span {
-  position: relative;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background: radial-gradient(circle at top, rgba(148, 163, 184, 0.8), #020617);
-  border: 1px solid rgba(148, 163, 184, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.7);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   box-shadow: 0 18px 30px rgba(15, 23, 42, 0.95);
-  overflow: hidden;
 }
 
-.flow-arrow span::before {
-  content: "";
-  position: absolute;
-  width: 140%;
-  height: 3px;
-  background: linear-gradient(to right, transparent, #22d3ee, transparent);
-  animation: flowLine 1.2s linear infinite;
-  opacity: 0.8;
+/* Route filters */
+
+.route-filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-/* destination wallet */
+.route-filter {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--text-primary);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.route-filter:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent);
+}
+
+.route-filter.active {
+  background: var(--accent-strong);
+  color: #0b1120;
+  border-color: var(--accent-strong);
+}
+
+.route-compare {
+  margin-top: 12px;
+  background: var(--bg-glass);
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Destination wallet & advanced */
 
 .dest-input {
   width: 100%;
@@ -576,28 +647,39 @@ body::before {
   color: rgba(148, 163, 184, 0.75);
 }
 
-.dest-input:focus {
-  border-color: rgba(56, 189, 248, 0.9);
-  box-shadow:
-    0 0 0 1px rgba(56, 189, 248, 0.6),
-    0 20px 40px rgba(15, 23, 42, 0.96);
+.advanced-settings {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.88);
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
-/* buttons row */
+/* Buttons row – Rhino style vertical stack */
 
 .actions-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 18px;
+}
+
+.primary-btn,
+.secondary-btn,
+.wallet-btn,
+.tab {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .primary-btn {
-  flex: 0 0 190px;
+  width: 100%;
   border-radius: var(--radius-pill);
   border: none;
-  padding: 11px 20px;
-  font-size: 13px;
+  padding: 12px 20px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   color: #0b1120;
@@ -607,18 +689,12 @@ body::before {
   box-shadow:
     0 0 26px rgba(52, 211, 153, 0.85),
     0 20px 48px rgba(22, 163, 74, 0.8);
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease,
-    filter 0.16s ease,
-    background-position 0.4s ease;
   background-size: 180% 180%;
   background-position: 10% 0%;
 }
 
 .primary-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
+  transform: translateY(-1px) scale(1.02);
   background-position: 80% 100%;
   box-shadow:
     0 0 32px rgba(74, 222, 128, 0.9),
@@ -629,26 +705,21 @@ body::before {
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
-  filter: grayscale(0.2) brightness(0.85);
 }
 
 .secondary-btn {
-  flex: 0 0 170px;
+  width: 100%;
   border-radius: var(--radius-pill);
   padding: 10px 18px;
   border: 1px solid rgba(148, 163, 184, 0.55);
-  background: rgba(15, 23, 42, 0.94);
+  background: rgba(15, 23, 42, 0.96);
   color: var(--text-muted);
   font-size: 13px;
   cursor: not-allowed;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.9);
-
-  /* prevent tiny clipping / layout shifts */
-  box-sizing: border-box;
-  margin: 0;
 }
 
-/* status */
+/* Status & advanced raw */
 
 .status-bar {
   margin-top: 10px;
@@ -664,7 +735,6 @@ body::before {
   color: var(--danger);
 }
 
-/* advanced raw section */
 .advanced-toggle {
   margin-top: 10px;
   font-size: 12px;
@@ -686,96 +756,46 @@ body::before {
   font-size: 11px;
 }
 
-/* ---------- Right summary card ---------- */
+/* ---------- History panel ---------- */
 
-.summary-card {
-  background:
-    radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.18), transparent 60%),
-    linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.98));
-  border-radius: var(--radius-2xl);
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  box-shadow: var(--shadow-soft), var(--shadow-glow-purple);
-  padding: 20px 20px 18px;
+.history-panel {
+  margin-top: 26px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: var(--bg-card);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: var(--shadow-soft);
+}
+
+.history-panel h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+#historyList {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  backdrop-filter: blur(26px);
-}
-
-.summary-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-
-.summary-subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.summary-grid {
-  margin-top: 10px;
-  border-radius: 18px;
-  border: 1px dashed rgba(148, 163, 184, 0.7);
-  padding: 12px 14px;
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  row-gap: 10px;
-  column-gap: 14px;
-  font-size: 12px;
-  background: rgba(15, 23, 42, 0.86);
-}
-
-.summary-label {
-  color: var(--text-muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-}
-
-.summary-value {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.summary-value-muted {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.summary-footer {
-  margin-top: 10px;
-  font-size: 11px;
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: 10px;
+  font-size: 12px;
 }
 
-.wallet-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 9px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.98);
-  font-size: 11px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
+.history-item {
+  padding: 10px 12px;
+  background: var(--bg-glass);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 /* ---------- Footer ---------- */
 
 .page-footer {
   width: 100%;
-  padding: 18px 0 20px;  /* slightly tighter bottom spacing */
-  margin-top: 8px;       /* closer to summary card for sharper look */
+  padding: 18px 0 20px;
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  align-items: center;          /* center horizontally */
-  justify-content: center;
-  gap: 3px;                     /* small gap between the two lines */
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   text-align: center;
   opacity: 0.8;
@@ -783,15 +803,14 @@ body::before {
 
 .page-footer span {
   display: block;
-  text-align: center;
 }
 
-/* ---------- Wallet modal ---------- */
+/* ---------- Wallet Modal & Token Modal ---------- */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.98));
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
   backdrop-filter: blur(18px);
   display: none;
   align-items: center;
@@ -854,165 +873,123 @@ body::before {
   color: var(--text-primary);
   font-size: 13px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.12s ease,
-    background 0.2s ease;
 }
 
 .wallet-item:hover {
   border-color: rgba(56, 189, 248, 0.9);
   background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.16), rgba(15, 23, 42, 0.98));
-  box-shadow:
-    0 0 24px rgba(56, 189, 248, 0.75),
-    0 20px 46px rgba(15, 23, 42, 0.98);
-  transform: translateY(-1px);
 }
 
-/* helper hidden class */
+/* Token modal */
+
+.token-modal {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: 20px;
+  padding: 16px;
+  width: 90%;
+  max-width: 420px;
+  max-height: 75vh;
+  overflow-y: auto;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.6);
+}
+
+.token-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.token-list button {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  margin-bottom: 8px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.token-list button:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent);
+}
+
+/* helper */
+
 .hidden {
   display: none !important;
+}
+
+/* Mobile sticky quote button */
+
+.mobile-sticky-quote {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88%;
+  padding: 12px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: #0b1120;
+  text-align: center;
+  font-size: 15px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+}
+
+@media (min-width: 900px) {
+  .mobile-sticky-quote {
+    display: none !important;
+  }
 }
 
 /* ---------- Animations ---------- */
 
 @keyframes floatOrbit {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(20px, -30px, 0);
-  }
-}
-
-@keyframes flowLine {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(20px, -30px, 0); }
 }
 
 @keyframes noiseShift {
-  0% {
-    transform: translate3d(-6px, 0, 0);
-  }
-  100% {
-    transform: translate3d(6px, 0, 0);
-  }
+  0% { transform: translate3d(-6px, 0, 0); }
+  100% { transform: translate3d(6px, 0, 0); }
 }
 
-/*  MOBILE & TABLET  ------------------------------------------- */
+/* ---------- Responsive ---------- */
+
 @media (max-width: 900px) {
-  .bridge-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .summary-card {
-    order: 2;
-    margin-top: 18px;
-    text-align: center;
-  }
-
-  /* topbar + main padding */
-  .topbar {
-    padding: 12px 14px;
-  }
-
-  .bridge-panel {
-    padding: 18px 14px;
-  }
-
-  .field-group-label {
-    font-size: 11px;
-    letter-spacing: 0.16em;
-  }
-
-  /* amount field + placeholder nicely inside card */
-  .amount-input {
-    font-size: 20px;
-    line-height: 1.25;
-  }
-
-  .amount-input::placeholder {
-    font-size: 14px;
-    line-height: 1.3;
-    white-space: normal;         /* allow wrapping */
-  }
-
-  .dest-input {
-    font-size: 13px;
-    padding-block: 10px;
-  }
-
-  .helper-text {
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
-  .dest-input::placeholder {
-    font-size: 12px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
-
-  /* buttons full-width stacked */
-  .actions-row {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .primary-btn,
-  .secondary-btn {
-    flex: 0 0 auto;
-    width: 100%;
-    justify-content: center;
-    font-size: 14px;
-    padding-block: 11px;
-    box-sizing: border-box;
-    margin: 0;
-  }
-
-  /* Receive (estimated) block centred */
-  .card-section:nth-of-type(2) {
-    text-align: center;
-  }
-
-  .card-section:nth-of-type(2) .card-section-header {
-    justify-content: center;
-    gap: 8px;
-  }
-
-  /* Summary card: 2 columns but all text centered */
-  .summary-grid {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 10px;
-    justify-items: center;
-    text-align: center;
-  }
-
-  .summary-label,
-  .summary-value,
-  .summary-value-muted {
-    text-align: center;
-  }
-}
-
-@media (max-width: 640px) {
   .page-shell {
     padding: 16px 12px 24px;
   }
 
-  /* keep wallet button top-right on one row */
   .topbar {
+    padding: 12px 14px;
     margin-bottom: 18px;
-    flex-wrap: nowrap;
     gap: 10px;
+  }
+
+  .bridge-panel {
+    padding: 18px 14px 16px;
+    border-radius: 22px;
+  }
+
+  .bridge-layout {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-wrap: nowrap;
   }
 
   .brand-title {
@@ -1033,34 +1010,376 @@ body::before {
     padding: 7px 12px;
   }
 
-  .bridge-panel,
-  .summary-card {
-    border-radius: 22px;
-    padding: 16px 14px 14px;
-  }
-
   .chain-row {
     grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
   }
 
-  /* summary card: 1 column stack on narrow phones */
-  .summary-grid {
-    grid-template-columns: 1fr;
+  .history-panel {
+    margin-top: 18px;
   }
+}
 
-  .summary-card {
-    margin-top: 12px;
+/* ==== Extra polish for settings, switches & progress ==== */
+
+/* chain-opt wrapper (logo + select nicely side-by-side) */
+.chain-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Each advanced setting row: label ↔ toggle/input */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.setting-row:last-child {
+  margin-bottom: 0;
+}
+
+.setting-row input[type="number"] {
+  width: 64px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+
+/* Nice iOS-style toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  transition: 0.2s ease;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  top: 2px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  box-shadow: 0 0 8px rgba(15, 23, 42, 0.7);
+  transition: 0.2s ease;
+}
+
+.switch input:checked + .slider {
+  background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.7), #16a34a);
+  border-color: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.6);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(14px);
+  background: #f9fafb;
+}
+
+/* Progress tracker steps */
+.progress {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.progress .step {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.progress .step.active {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+/* Slim loading bar container */
+.progress-wrapper {
+  margin-top: 6px;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 999px;
+  border: 1px solid rgba(30, 64, 175, 0.8);
+  overflow: hidden;
+}
+
+/* ---- SoulSwap Mobile/UI Fix Patch ---- */
+
+/* 1 - Remove fee texts */
+#feeDetailsText,
+.card-section .helper-text {
+  display: none !important;
+}
+
+/* 2 - Center receive title + enlarge amount */
+.card-section-header {
+  justify-content: center !important;
+  text-align: center;
+}
+
+#receivePreview {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  display: block;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* 3 - Center "You will receive at least" */
+#minReceive {
+  text-align: center !important;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* 4 - Center small lines */
+#microcopy {
+  text-align: center !important;
+}
+
+/* 5 - Yellow helper text under destination address */
+#destAddress + .helper-text {
+  text-align: center !important;
+  color: #facc15 !important;
+  font-weight: 500;
+}
+
+/* 6 - Slippage clean styling */
+#slippage {
+  width: 90px !important;
+  padding: 8px !important;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 7 - Connect wallet → top right mobile */
+@media (max-width: 640px) {
+  .topbar {
+    justify-content: space-between !important;
   }
+  #openWalletModal {
+    margin-left: auto !important;
+  }
+}
 
-  /* footer perfectly centred with tight spacing */
-  .page-footer {
-    margin-top: 8px;
-    padding-bottom: 20px;
+/* 8 - Clean left logo+title mobile */
+@media (max-width: 640px) {
+  .brand-block {
+    display: flex;
     align-items: center;
-    text-align: center;
+    gap: 10px;
+  }
+  .brand-title {
+    font-size: 18px !important;
+  }
+}
+
+/* 9 - Subtitle centered under header */
+@media (max-width: 640px) {
+  .brand-text {
+    width: 100%;
+    text-align: center !important;
+    align-items: center !important;
+  }
+  .brand-subtitle {
+    text-align: center !important;
+    margin-top: 4px;
+  }
+}
+
+/* Token icons sizing */
+.chain-logo {
+  width: 20px !important;
+  height: 20px !important;
+  object-fit: contain;
+}
+
+/* ================================
+   NAV TABS CENTER (DESKTOP + MOBILE)
+   ================================ */
+
+.main-tabs {
+  justify-content: center;              /* center the Bridge / History buttons */
+}
+
+.main-tabs .tab {
+  min-width: 90px;
+  text-align: center;
+}
+
+/* ==================================
+   SEND / RECEIVE HEADER LAYOUT
+   ================================== */
+
+/* Default: left label, right control */
+.bridge-panel .card-section .card-section-header {
+  justify-content: space-between !important;
+  align-items: center;
+}
+
+/* SEND header: "Send" left, token selector right (already right because of flex) */
+.bridge-panel .card-section:first-of-type .card-section-header span:first-child {
+  font-weight: 500;
+}
+
+/* RECEIVE header:
+   - "Receive (estimated)" left, bold normal text
+   - amount (9.95 USDC) right, bold
+*/
+.bridge-panel .card-section:nth-of-type(2) .card-section-header span:first-child {
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+}
+
+#receivePreview {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  text-align: right;
+  margin-left: auto;
+}
+
+/* "You will receive at least…" centered */
+#minReceive {
+  text-align: center !important;
+}
+
+/* Small line under receive centered */
+#microcopy {
+  text-align: center !important;
+}
+
+/* Status message (Route ready… etc.) centered */
+#status {
+  text-align: center;
+}
+
+
+/* ==================================
+   SLIPPAGE CONTROLS
+   ================================== */
+
+.setting-row.setting-slippage {
+  align-items: flex-start;
+}
+
+.slippage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.slip-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-primary);
+  font-size: 11px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.slip-btn:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.slip-btn.active {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #020617;
+}
+
+/* Custom slippage input (hidden until Custom is chosen) */
+.slip-input {
+  width: 70px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-primary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ================================
+   MOBILE HEADER LAYOUT
+   ================================ */
+
+@media (max-width: 640px) {
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
   }
 
-  .page-footer span {
-    display: block;
+  .brand-block {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;  /* Soul Swap on one line with logo */
+  }
+
+  .brand-title {
+    font-size: 18px;
+  }
+
+  .brand-subtitle {
+    width: 100%;
+    text-align: center;       /* tagline centered below */
+    margin-top: 2px;
+    font-size: 11px;
+  }
+
+  .topbar-right {
+    margin-left: auto;
+    flex-shrink: 0;
   }
 }

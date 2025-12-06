@@ -1,29 +1,53 @@
-// src/server.ts
+// src/server.ts 
 
-import express from "express";
+// Phase-2 Pro Router Backend Upgrade
+
+import express, { Request, Response } from "express";
+import cors from "cors";
 import path from "path";
-import dotenv from "dotenv";
-import { router } from "./routes";
-
-dotenv.config();
+import { router } from "./routes";   // <-- গুরুত্বপূর্ণ
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// JSON body parser (future POST endpoints er jonno)
+// --- Middlewares ---
+app.use(cors());
 app.use(express.json());
 
-// Static frontend (public folder)
-app.use(express.static(path.join(__dirname, "..", "public")));
-
-// API routes
+// --------------------
+// 1) API routes আগে
+// --------------------
 app.use("/api", router);
 
-// SPA hole nice fallback – ekhane simple index.html
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+// (optional) simple history store
+type HistoryItem = {
+  time: number;
+  payload: any;
+};
+
+const history: HistoryItem[] = [];
+
+app.get("/api/history", (_req: Request, res: Response) => {
+  res.json(history.slice(-20).reverse());
 });
 
+// --------------------
+// 2) Static files
+// --------------------
+const publicDir = path.join(__dirname, "..", "public");
+app.use(express.static(publicDir));
+
+// --------------------
+// 3) SPA Fallback
+//    (API ছাড়া সব path এ index.html)
+// --------------------
+app.get(/^\/(?!api).*/, (_req: Request, res: Response) => {
+  res.sendFile(path.join(publicDir, "index.html"));
+});
+
+// --------------------
+// Start server
+// --------------------
 app.listen(PORT, () => {
-  console.log(`Bridge backend running on ${PORT}`);
+  console.log(`Backend running on http://localhost:${PORT}`);
 });
