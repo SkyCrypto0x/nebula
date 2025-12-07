@@ -1,3 +1,5 @@
+/* public/style.css */
+
 /* =========================================================
    SOUL SWAP · ULTRA PREMIUM NEON / GLASSMORPHIC THEME
    Rhino.fi–style slim bridge card
@@ -136,8 +138,8 @@ body::before {
 }
 
 .logo-circle {
-  width: 46px;
-  height: 46px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -156,7 +158,7 @@ body::before {
 .logo-circle::after {
   content: "";
   position: absolute;
-  inset: 4px;
+  inset: 6px;
   border-radius: inherit;
   border: 1px solid rgba(148, 163, 184, 0.6);
   opacity: 0.7;
@@ -170,15 +172,26 @@ body::before {
   filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.9));
 }
 
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .brand-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
 }
 
 .brand-subtitle {
   font-size: 12px;
-  color: var(--text-muted);
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: 0.18em;
+  color: #8ab4ff; /* premium bluish tint */
+  margin-top: 2px;
 }
 
 .topbar-right {
@@ -191,7 +204,7 @@ body::before {
 }
 
 .backend-pill {
-  padding: 6px 11px;
+  padding: 6px 14px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(45, 212, 191, 0.35);
   background:
@@ -214,30 +227,20 @@ body::before {
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.3);
 }
 
-.theme-btn {
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  font-size: 12px;
-}
-
 .wallet-btn {
   border-radius: var(--radius-pill);
   border: none;
-  padding: 8px 18px;
+  padding: 8px 24px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   color: #f9fafb;
   background-image:
     radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.6), transparent 60%),
-    linear-gradient(135deg, var(--accent-2), var(--accent-strong));
+    linear-gradient(135deg, #22c55e, #16a34a);
   box-shadow:
-    0 0 22px rgba(56, 189, 248, 0.68),
-    0 18px 45px rgba(59, 130, 246, 0.55);
+    0 0 22px rgba(34, 197, 94, 0.68),
+    0 18px 45px rgba(34, 197, 94, 0.55);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -255,8 +258,8 @@ body::before {
   filter: brightness(1.06);
   background-position: 80% 100%;
   box-shadow:
-    0 0 32px rgba(56, 189, 248, 0.85),
-    0 24px 60px rgba(37, 99, 235, 0.8);
+    0 0 32px rgba(34, 197, 94, 0.9),
+    0 24px 60px rgba(22, 163, 74, 0.8);
 }
 
 .wallet-btn:active {
@@ -266,7 +269,6 @@ body::before {
 
 /* ---------- Main layout ---------- */
 
-/* Rhino-style: single slim card in center */
 .bridge-layout {
   position: relative;
   z-index: 2;
@@ -312,12 +314,14 @@ body::before {
 }
 
 /* Tabs */
+
 .main-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: 16px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   padding-bottom: 8px;
+  justify-content: center;
 }
 
 .tab {
@@ -329,6 +333,8 @@ body::before {
   border: none;
   background: transparent;
   transition: 0.2s ease;
+  min-width: 90px;
+  text-align: center;
 }
 
 .tab:hover {
@@ -390,6 +396,10 @@ body::before {
   outline: none;
   appearance: none;
   padding-right: 18px;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .select-shell .chevron {
@@ -399,10 +409,16 @@ body::before {
 
 /* Chain logos */
 
+.chain-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .chain-logo {
   width: 20px;
   height: 20px;
-  margin-left: 6px;
+  margin-left: 2px;
   vertical-align: middle;
   opacity: 0.9;
   flex-shrink: 0;
@@ -459,19 +475,8 @@ body::before {
 .card-section-header span {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
-}
-
-/* add FROM / TO labels */
-.bridge-panel .card-section:nth-of-type(1) .card-section-header span:first-child::before {
-  content: "From · ";
-  font-weight: 500;
-}
-
-.bridge-panel .card-section:nth-of-type(2) .card-section-header span:first-child::before {
-  content: "To · ";
-  font-weight: 500;
 }
 
 /* Token chip */
@@ -557,13 +562,17 @@ body::before {
   border-radius: var(--radius-lg);
   color: var(--accent-green);
   font-size: 12px;
+  text-align: center;
 }
 
-/* Nice value for receive */
-
+/* receive amount style (will override later with color) */
 #receivePreview {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: inline !important;
+  margin: 0 !important;
+  margin-left: auto !important;
+  color: #60a5fa !important; /* সুন্দর blue */
 }
 
 /* Flow arrow between send/receive */
@@ -657,7 +666,7 @@ body::before {
   color: var(--text-muted);
 }
 
-/* Buttons row – Rhino style vertical stack */
+/* Buttons row */
 
 .actions-row {
   display: flex;
@@ -719,12 +728,13 @@ body::before {
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.9);
 }
 
-/* Status & advanced raw */
+/* Status & advanced */
 
 .status-bar {
   margin-top: 10px;
   font-size: 12px;
   color: var(--text-muted);
+  text-align: center;
 }
 
 .status-bar.ok {
@@ -952,83 +962,8 @@ body::before {
   }
 }
 
-/* ---------- Animations ---------- */
+/* ---------- Slippage controls ---------- */
 
-@keyframes floatOrbit {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(20px, -30px, 0); }
-}
-
-@keyframes noiseShift {
-  0% { transform: translate3d(-6px, 0, 0); }
-  100% { transform: translate3d(6px, 0, 0); }
-}
-
-/* ---------- Responsive ---------- */
-
-@media (max-width: 900px) {
-  .page-shell {
-    padding: 16px 12px 24px;
-  }
-
-  .topbar {
-    padding: 12px 14px;
-    margin-bottom: 18px;
-    gap: 10px;
-  }
-
-  .bridge-panel {
-    padding: 18px 14px 16px;
-    border-radius: 22px;
-  }
-
-  .bridge-layout {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-  .topbar {
-    flex-wrap: nowrap;
-  }
-
-  .brand-title {
-    font-size: 18px;
-  }
-
-  .brand-subtitle {
-    font-size: 11px;
-  }
-
-  .backend-pill {
-    font-size: 10px;
-    padding: 4px 8px;
-  }
-
-  .wallet-btn {
-    font-size: 12px;
-    padding: 7px 12px;
-  }
-
-  .chain-row {
-    grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
-  }
-
-  .history-panel {
-    margin-top: 18px;
-  }
-}
-
-/* ==== Extra polish for settings, switches & progress ==== */
-
-/* chain-opt wrapper (logo + select nicely side-by-side) */
-.chain-opt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Each advanced setting row: label ↔ toggle/input */
 .setting-row {
   display: flex;
   justify-content: space-between;
@@ -1102,197 +1037,7 @@ body::before {
   background: #f9fafb;
 }
 
-/* Progress tracker steps */
-.progress {
-  margin-top: 14px;
-  display: flex;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.progress .step {
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.9);
-}
-
-.progress .step.active {
-  border-color: var(--accent-strong);
-  color: var(--accent-strong);
-  background: rgba(56, 189, 248, 0.08);
-}
-
-/* Slim loading bar container */
-.progress-wrapper {
-  margin-top: 6px;
-  width: 100%;
-  background: rgba(15, 23, 42, 0.95);
-  border-radius: 999px;
-  border: 1px solid rgba(30, 64, 175, 0.8);
-  overflow: hidden;
-}
-
-/* ---- SoulSwap Mobile/UI Fix Patch ---- */
-
-/* 1 - Remove fee texts */
-#feeDetailsText,
-.card-section .helper-text {
-  display: none !important;
-}
-
-/* 2 - Center receive title + enlarge amount */
-.card-section-header {
-  justify-content: center !important;
-  text-align: center;
-}
-
-#receivePreview {
-  font-size: 26px !important;
-  font-weight: 700 !important;
-  display: block;
-  text-align: center;
-  margin-top: 6px;
-}
-
-/* 3 - Center "You will receive at least" */
-#minReceive {
-  text-align: center !important;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* 4 - Center small lines */
-#microcopy {
-  text-align: center !important;
-}
-
-/* 5 - Yellow helper text under destination address */
-#destAddress + .helper-text {
-  text-align: center !important;
-  color: #facc15 !important;
-  font-weight: 500;
-}
-
-/* 6 - Slippage clean styling */
-#slippage {
-  width: 90px !important;
-  padding: 8px !important;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(255,255,255,0.06);
-  color: white;
-  font-size: 14px;
-  text-align: center;
-}
-
-/* 7 - Connect wallet → top right mobile */
-@media (max-width: 640px) {
-  .topbar {
-    justify-content: space-between !important;
-  }
-  #openWalletModal {
-    margin-left: auto !important;
-  }
-}
-
-/* 8 - Clean left logo+title mobile */
-@media (max-width: 640px) {
-  .brand-block {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .brand-title {
-    font-size: 18px !important;
-  }
-}
-
-/* 9 - Subtitle centered under header */
-@media (max-width: 640px) {
-  .brand-text {
-    width: 100%;
-    text-align: center !important;
-    align-items: center !important;
-  }
-  .brand-subtitle {
-    text-align: center !important;
-    margin-top: 4px;
-  }
-}
-
-/* Token icons sizing */
-.chain-logo {
-  width: 20px !important;
-  height: 20px !important;
-  object-fit: contain;
-}
-
-/* ================================
-   NAV TABS CENTER (DESKTOP + MOBILE)
-   ================================ */
-
-.main-tabs {
-  justify-content: center;              /* center the Bridge / History buttons */
-}
-
-.main-tabs .tab {
-  min-width: 90px;
-  text-align: center;
-}
-
-/* ==================================
-   SEND / RECEIVE HEADER LAYOUT
-   ================================== */
-
-/* Default: left label, right control */
-.bridge-panel .card-section .card-section-header {
-  justify-content: space-between !important;
-  align-items: center;
-}
-
-/* SEND header: "Send" left, token selector right (already right because of flex) */
-.bridge-panel .card-section:first-of-type .card-section-header span:first-child {
-  font-weight: 500;
-}
-
-/* RECEIVE header:
-   - "Receive (estimated)" left, bold normal text
-   - amount (9.95 USDC) right, bold
-*/
-.bridge-panel .card-section:nth-of-type(2) .card-section-header span:first-child {
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  font-size: 11px;
-}
-
-#receivePreview {
-  font-size: 20px !important;
-  font-weight: 700 !important;
-  text-align: right;
-  margin-left: auto;
-}
-
-/* "You will receive at least…" centered */
-#minReceive {
-  text-align: center !important;
-}
-
-/* Small line under receive centered */
-#microcopy {
-  text-align: center !important;
-}
-
-/* Status message (Route ready… etc.) centered */
-#status {
-  text-align: center;
-}
-
-
-/* ==================================
-   SLIPPAGE CONTROLS
-   ================================== */
+/* Slippage buttons */
 
 .setting-row.setting-slippage {
   align-items: flex-start;
@@ -1328,7 +1073,6 @@ body::before {
   color: #020617;
 }
 
-/* Custom slippage input (hidden until Custom is chosen) */
 .slip-input {
   width: 70px;
   padding: 6px 8px;
@@ -1340,46 +1084,257 @@ body::before {
   text-align: center;
 }
 
-.hidden {
+/* Progress tracker steps */
+.progress {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.progress .step {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.progress .step.active {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+/* Slim loading bar container */
+.progress-wrapper {
+  margin-top: 6px;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 999px;
+  border: 1px solid rgba(30, 64, 175, 0.8);
+  overflow: hidden;
+}
+
+/* ---------- Animations ---------- */
+
+@keyframes floatOrbit {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(20px, -30px, 0); }
+}
+
+@keyframes noiseShift {
+  0% { transform: translate3d(-6px, 0, 0); }
+  100% { transform: translate3d(6px, 0, 0); }
+}
+
+/* ---------- Responsive base tweaks ---------- */
+
+@media (max-width: 900px) {
+  .page-shell {
+    padding: 16px 12px 24px;
+  }
+
+  .topbar {
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    gap: 10px;
+  }
+
+  .bridge-panel {
+    padding: 18px 14px 16px;
+    border-radius: 22px;
+  }
+
+  .bridge-layout {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .chain-row {
+    grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1fr);
+  }
+
+  .history-panel {
+    margin-top: 18px;
+  }
+}
+
+/* ================================
+   HEADER / LOGO FINAL TWEAKS
+   ================================ */
+
+/* Backend: online badge hide */
+.backend-pill {
+  display: none !important;
+}
+
+/* Theme toggle যদি থাকে, লুকিয়ে দাও */
+.theme-btn {
   display: none !important;
 }
 
 /* ================================
-   MOBILE HEADER LAYOUT
+   CHAIN SELECTOR OVERFLOW FIX
    ================================ */
 
-@media (max-width: 640px) {
+.select-shell {
+  overflow: hidden;
+}
+
+.select-shell .chain-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.select-shell .chain-opt select,
+.select-shell select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chain-logo {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+@media (max-width: 480px) {
+  .select-shell {
+    padding: 6px 10px;
+  }
+
+  .select-shell select {
+    font-size: 12px;
+  }
+}
+
+/* ==================== 1. Desktop: Connect Wallet → Top Right ==================== */
+@media (min-width: 641px) {
   .topbar {
+    flex-direction: row !important;
+    justify-content: space-between;
+    padding: 18px 28px;
+    gap: 20px;
+  }
+
+  .topbar-main-row {
     display: flex;
     align-items: center;
+    width: 100%;
     justify-content: space-between;
-    gap: 10px;
   }
 
   .brand-block {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .brand-text {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;  /* Soul Swap on one line with logo */
-  }
-
-  .brand-title {
-    font-size: 18px;
-  }
-
-  .brand-subtitle {
-    width: 100%;
-    text-align: center;       /* tagline centered below */
-    margin-top: 2px;
-    font-size: 11px;
+    flex-shrink: 0;
   }
 
   .topbar-right {
     margin-left: auto;
     flex-shrink: 0;
+  }
+
+  /* Backend pill আবার দেখাতে চাইলে (optional) */
+  .backend-pill {
+    display: inline-flex !important;
+  }
+}
+
+/* ==================== MOBILE ONLY – FINAL PERFECT HEADER ==================== */
+@media (max-width: 640px) {
+  /* 1. টপবার আবার row করি, কিন্তু ভিতরে সবকিছু সুন্দর করে arrange */
+  .topbar {
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px !important;
+    gap: 12px;
+  }
+
+  /* লোগো + টেক্সট লেফটে, Connect wallet রাইটে */
+  .topbar-main-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Soul Swap টেক্সট সাইজ */
+  .brand-title {
+    font-size: 18px !important;
+  }
+
+  /* Connect wallet বাটন রাইট কর্নারে + ছোট কিন্তু প্রিমিয়াম */
+  .wallet-btn {
+    padding: 8px 18px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    min-width: auto !important;
+  }
+
+  /* 2. Subtitle টা টপবারের নিচে, সেন্টারে, বড় + প্রিমিয়াম */
+  .brand-subtitle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -22px;
+    font-size: 11.8px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.28em !important;
+    color: #c4b5fd !important;
+    background: rgba(30, 41, 77, 0.92);
+    padding: 6px 18px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    z-index: 11;
+  }
+
+  /* 3. Bridge/History ট্যাব আরো নিচে */
+  .main-tabs {
+    margin-top: 44px !important;   /* subtitle-এর নিচে স্পেস */
+    margin-bottom: 20px !important;
+    justify-content: center;
+  }
+
+  .main-tabs .tab {
+    padding: 11px 24px !important;
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    border-radius: 999px !important;
+  }
+
+  .main-tabs .tab.active {
+    background: linear-gradient(135deg, #22d3ee, #8b5cf6) !important;
+    color: #0f172a !important;
+    box-shadow: 0 10px 30px rgba(34, 211, 153, 0.45) !important;
+  }
+}
+
+/* ছোট স্ক্রিনের জন্য অতিরিক্ত টুইক */
+@media (max-width: 380px) {
+  .brand-subtitle {
+    font-size: 10.8px !important;
+    padding: 5px 14px !important;
+    bottom: -20px;
+  }
+
+  .main-tabs {
+    margin-top: 40px !important;
   }
 }

@@ -7,6 +7,14 @@
 type ChainName = "solana" | "ethereum" | "bsc" | "arbitrum" | "base";
 type TokenSymbol = "USDC" | "USDT" | "ETH" | "SOL";
 
+const CHAIN_ICONS: Record<ChainName, string> = {
+  solana: "icons/solana.svg",
+  ethereum: "icons/ethereum.svg",
+  bsc: "icons/bsc.svg",
+  arbitrum: "icons/arbitrum.svg",
+  base: "icons/base.svg",
+};
+
 type QuoteApiResponse = {
   success: boolean;
   netAmount?: string; // smallest units from backend
@@ -76,6 +84,9 @@ let historyListEl: HTMLDivElement;
 let fromChainEl: HTMLSelectElement;
 let toChainEl: HTMLSelectElement;
 let flipBtn: HTMLButtonElement;
+
+let fromChainLogoEl: HTMLImageElement;
+let toChainLogoEl: HTMLImageElement;
 
 let tokenEl: HTMLSelectElement;
 let amountEl: HTMLInputElement;
@@ -239,6 +250,13 @@ function updateSummaryCard() {
   } else {
     destinationWalletEl.textContent = "Not set";
   }
+}
+
+function updateChainLogos() {
+  const from = fromChainEl.value as ChainName;
+  const to = toChainEl.value as ChainName;
+  fromChainLogoEl.src = CHAIN_ICONS[from];
+  toChainLogoEl.src = CHAIN_ICONS[to];
 }
 
 function maybeEnableSwapButton() {
@@ -475,7 +493,14 @@ function renderRoutes(routes: any[]) {
 // ---- Swap handler (updated) ----
 
 function celebrateBridge() {
-  confetti({
+  const c = (window as any).confetti;
+  if (!c) {
+    // confetti script load na thakle কিছুই করব না,
+    // শুধু bridge সফল হলেও কোন animation দেখাবে না।
+    return;
+  }
+
+  c({
     particleCount: 150,
     spread: 70,
     origin: { y: 0.65 },
@@ -483,6 +508,7 @@ function celebrateBridge() {
     colors: ["#22d3ee", "#8b5cf6", "#ec4899", "#22c55e"],
   });
 }
+
 
 // ---- History panel render ----
 
@@ -600,6 +626,9 @@ function initUI() {
   toChainEl = mustGet<HTMLSelectElement>("toChain");
   flipBtn = mustGet<HTMLButtonElement>("flipChains");
 
+  fromChainLogoEl = mustGet<HTMLImageElement>("fromChainLogo");
+  toChainLogoEl = mustGet<HTMLImageElement>("toChainLogo");
+
   tokenEl = mustGet<HTMLSelectElement>("token");
   amountEl = mustGet<HTMLInputElement>("amount");
   destAddressEl = mustGet<HTMLInputElement>("destAddress");
@@ -662,6 +691,7 @@ function initUI() {
     el.addEventListener("change", () => {
       clearQuoteState();
       updateSummaryCard();
+      updateChainLogos();
     })
   );
 
@@ -794,6 +824,8 @@ function initUI() {
 
   // ---- Slippage presets ----
   setupSlippageControls();
+
+  updateChainLogos();
 }
 
 // ---- DOM content ready হলে init ----
