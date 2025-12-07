@@ -2,7 +2,6 @@
 
 import { fetchQuote, type ChainName } from "@mayanfinance/swap-sdk";
 import { FEE_BPS } from "./config";
-import { applyProtocolFeeSmallest } from "./fee";
 import { applyFee } from "./fee";
 
 /**
