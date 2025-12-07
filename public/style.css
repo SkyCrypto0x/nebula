@@ -544,12 +544,14 @@ body::before {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 6px;
+  text-align: center;
 }
 
 .microcopy {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 6px;
+  text-align: center;
 }
 
 /* Min receive highlight */
@@ -1257,6 +1259,7 @@ body::before {
 @media (max-width: 640px) {
   /* 1. টপবার আবার row করি, কিন্তু ভিতরে সবকিছু সুন্দর করে arrange */
   .topbar {
+    position: relative;               /* ⭐ important fix */
     flex-direction: row !important;
     align-items: center;
     justify-content: space-between;
@@ -1307,7 +1310,7 @@ body::before {
 
   /* 3. Bridge/History ট্যাব আরো নিচে */
   .main-tabs {
-    margin-top: 44px !important;   /* subtitle-এর নিচে স্পেস */
+    margin-top: 44px !important;
     margin-bottom: 20px !important;
     justify-content: center;
   }
@@ -1337,4 +1340,11 @@ body::before {
   .main-tabs {
     margin-top: 40px !important;
   }
+}
+
+.card-section .helper-text,
+.card-section .microcopy {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
