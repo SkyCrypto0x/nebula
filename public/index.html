@@ -127,7 +127,10 @@
                 <input
                   id="amount"
                   class="amount-input"
-                  type="text"
+                  type="number"
+                  inputmode="decimal"
+                  step="0.000001"
+                  min="0"
                 />
                 <button class="max-btn" type="button">MAX</button>
               </div>
@@ -150,7 +153,7 @@
               </div>
 
               <div class="helper-text">
-                Includes all routing costs & hidden platform fee.
+                Includes all routing costs & protocol fee.
               </div>
 
               <div class="microcopy" id="microcopy">≈ $0.00 after fees</div>
@@ -238,7 +241,7 @@
             </div>
 
             <!-- Progress steps -->
-            <div id="progressTracker" class="progress hidden">
+            <div id="progressTracker" class="progress">
               <div class="step" id="stepPrepare">Preparing</div>
               <div class="step" id="stepSwap">Swapping</div>
               <div class="step" id="stepClaim">Claiming</div>
@@ -374,6 +377,14 @@
             <button class="wallet-item" type="button" data-wallet="soon">
               <span>WalletConnect (coming soon)</span>
               <span>…</span>
+            </button>
+            <button
+              id="disconnectWallet"
+              class="wallet-item wallet-item-secondary"
+              type="button"
+            >
+              <span>Disconnect wallet</span>
+              <span>✕</span>
             </button>
           </div>
         </div>

@@ -37,6 +37,7 @@ interface BridgeHistoryEntry {
   from: string;
   to: string;
   tx: any;
+  token: TokenSymbol;
 }
 
 // small decimal map (UI side only)
@@ -61,13 +62,34 @@ function byId<T extends HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
 }
 
-// required element helper – না থাকলে error
+// required element helper – না থাকলে error (এখন safe লগ সহ)
 function mustGet<T extends HTMLElement>(id: string): T {
-  const el = byId<T>(id);
+  const el = document.getElementById(id);
   if (!el) {
-    throw new Error(`Required element #${id} not found`);
+    console.error("Missing element:", id);
+    throw new Error("Missing element " + id);
   }
-  return el;
+  return el as T;
+}
+
+// ---- Progress tracker helper (global) ----
+
+function setProgress(step: "prepare" | "swap" | "claim" | "done") {
+  const steps = {
+    prepare: document.getElementById("stepPrepare"),
+    swap: document.getElementById("stepSwap"),
+    claim: document.getElementById("stepClaim"),
+    done: document.getElementById("stepDone"),
+  };
+
+  // সব step inactive করো
+  Object.values(steps).forEach((el) => el?.classList.remove("active"));
+
+  // নির্দিষ্ট step active করো
+  steps[step]?.classList.add("active");
+
+  // Ensure tracker visible
+  document.getElementById("progressTracker")?.classList.remove("hidden");
 }
 
 // ---- DOM refs (assigned inside initUI) ----
@@ -111,6 +133,7 @@ let walletSummaryEl: HTMLSpanElement;
 // wallet modal
 let openWalletModalBtn: HTMLButtonElement;
 let closeWalletModalBtn: HTMLButtonElement;
+let disconnectWalletBtn: HTMLButtonElement | null;
 let walletBackdropEl: HTMLDivElement;
 let walletModalEl: HTMLDivElement;
 let walletItemBtns: NodeListOf<HTMLButtonElement>;
@@ -154,6 +177,31 @@ let connectedWallet: ConnectedWallet | null = null;
 // --- NEW STATE ---
 let selectedRouteType: "fastest" | "cheapest" | "safest" = "cheapest";
 let bridgeHistory: BridgeHistoryEntry[] = [];
+
+// ---- History persistence helpers ----
+
+function loadHistoryFromStorage() {
+  try {
+    const saved = localStorage.getItem("bridgeHistory");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        bridgeHistory = parsed as BridgeHistoryEntry[];
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function saveHistoryToStorage() {
+  try {
+    const subset = bridgeHistory.slice(-20);
+    localStorage.setItem("bridgeHistory", JSON.stringify(subset));
+  } catch {
+    // ignore
+  }
+}
 
 // ---- Helper functions ----
 
@@ -325,6 +373,25 @@ async function connectMetamask() {
     const addr = accounts?.[0];
     if (!addr) throw new Error("No address returned.");
 
+    // Network mismatch warning
+    const chainId = (await w.ethereum.request({
+      method: "eth_chainId",
+    })) as string;
+
+    const uiChain = fromChainEl.value as ChainName;
+    if (uiChain === "ethereum" && chainId !== "0x1") {
+      setStatus("Warning: switch MetaMask to Ethereum mainnet.", "error");
+    }
+    if (uiChain === "bsc" && chainId !== "0x38") {
+      setStatus("Warning: switch MetaMask to BNB Chain mainnet.", "error");
+    }
+    if (uiChain === "arbitrum" && chainId !== "0xa4b1") {
+      setStatus("Warning: switch MetaMask to Arbitrum One.", "error");
+    }
+    if (uiChain === "base" && chainId !== "0x2105") {
+      setStatus("Warning: switch MetaMask to Base mainnet.", "error");
+    }
+
     connectedWallet = { type: "metamask", address: addr };
     updateWalletUI();
     setStatus("EVM wallet connected.", "ok");
@@ -377,6 +444,17 @@ function updateRouteSelection(type: "fastest" | "cheapest" | "safest") {
 // ---- Quote logic extracted into a function ----
 
 async function fetchQuote() {
+  // progress: preparing route
+  setProgress("prepare");
+
+  const fromChain = fromChainEl.value as ChainName;
+  const toChain = toChainEl.value as ChainName;
+
+  if (fromChain === toChain) {
+    setStatus("Select two different chains to bridge.", "error");
+    return;
+  }
+
   const amountStr = amountEl.value.trim();
   const amountNum = Number(amountStr);
 
@@ -437,7 +515,10 @@ async function fetchQuote() {
       )} ${tokenEl.value}`;
     }
 
-    microcopyEl.textContent = `Includes all bridge fees & est. gas.`;
+    microcopyEl.textContent = `Includes all bridge fees & est. gas`;
+
+    // progress: route fetched, ready to swap
+    setProgress("swap");
 
     // Render route list
     renderRoutes(data.routes || []);
@@ -473,30 +554,49 @@ function renderRoutes(routes: any[]) {
   routeContainerEl.classList.remove("hidden");
   routeFiltersEl?.classList.remove("hidden");
 
-  routeListEl.innerHTML = routes
-    .map(
-      (r: any) => `
-      <div class="route-row">
-        <div class="route-left">
-          <span>${r.protocol}</span>
-          <small>${r.estimatedTime} sec</small>
-        </div>
-        <div class="route-right">
-          <span>${r.netHuman} ${tokenEl.value}</span>
-          <small>Fee: ${r.totalFee}</small>
-        </div>
-      </div>`
-    )
-    .join("");
+  routeListEl.innerHTML = "";
+
+  routes.forEach((r: any) => {
+    const row = document.createElement("div");
+    row.className = "route-row";
+
+    const left = document.createElement("div");
+    left.className = "route-left";
+
+    const protoSpan = document.createElement("span");
+    protoSpan.textContent = String(r.protocol ?? "");
+
+    const timeSmall = document.createElement("small");
+    timeSmall.textContent = `${r.estimatedTime ?? "-"} sec`;
+
+    left.appendChild(protoSpan);
+    left.appendChild(timeSmall);
+
+    const right = document.createElement("div");
+    right.className = "route-right";
+
+    const netSpan = document.createElement("span");
+    netSpan.textContent = `${r.netHuman ?? "-"} ${tokenEl.value}`;
+
+    const feeSmall = document.createElement("small");
+    feeSmall.textContent = `Fee: ${r.totalFee ?? "-"}`;
+
+    right.appendChild(netSpan);
+    right.appendChild(feeSmall);
+
+    row.appendChild(left);
+    row.appendChild(right);
+
+    routeListEl.appendChild(row);
+  });
 }
 
-// ---- Swap handler (updated) ----
+// ---- Swap handler placeholder (no /api/swap yet) ----
 
 function celebrateBridge() {
   const c = (window as any).confetti;
   if (!c) {
-    // confetti script load na thakle কিছুই করব না,
-    // শুধু bridge সফল হলেও কোন animation দেখাবে না।
+    // confetti script load na থাকলে কিছুই করব না
     return;
   }
 
@@ -509,23 +609,35 @@ function celebrateBridge() {
   });
 }
 
-
 // ---- History panel render ----
 
 function renderHistoryPanel() {
-  historyListEl.innerHTML = bridgeHistory
-    .map(
-      (h: BridgeHistoryEntry) => `
-      <div class="history-item">
-        <div>${new Date(h.time).toLocaleTimeString()}</div>
-        <div>${h.amount ?? "-"} ${tokenEl.value}</div>
-        <div>${h.from} → ${h.to}</div>
-        <div>Tx: ${
-          h.tx?.hash ? h.tx.hash.slice(0, 8) + "…" : "--------"
-        }</div>
-      </div>`
-    )
-    .join("");
+  historyListEl.innerHTML = "";
+
+  bridgeHistory.forEach((h: BridgeHistoryEntry) => {
+    const item = document.createElement("div");
+    item.className = "history-item";
+
+    const timeDiv = document.createElement("div");
+    timeDiv.textContent = new Date(h.time).toLocaleString();
+
+    const amountDiv = document.createElement("div");
+    amountDiv.textContent = `${h.amount ?? "-"} ${h.token}`;
+
+    const pairDiv = document.createElement("div");
+    pairDiv.textContent = `${h.from} → ${h.to}`;
+
+    const txDiv = document.createElement("div");
+    const hash = h.tx?.hash;
+    txDiv.textContent = `Tx: ${hash ? shortenAddress(hash, 4) : "--------"}`;
+
+    item.appendChild(timeDiv);
+    item.appendChild(amountDiv);
+    item.appendChild(pairDiv);
+    item.appendChild(txDiv);
+
+    historyListEl.appendChild(item);
+  });
 }
 
 // ---- Custom cursor init – safe ভাবে ----
@@ -545,9 +657,6 @@ function initCustomCursor() {
 
   // cursor visible করো
   cursor.style.display = "block";
-
-  // এখনই body-তে class যোগ করো (CSS তখন default cursor hide করবে)
-  // document.body.classList.add("custom-cursor-enabled");
 
   window.addEventListener("mousemove", (e) => {
     cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
@@ -668,6 +777,11 @@ function initUI() {
 
   progressBarEl = mustGet<HTMLDivElement>("progressBar");
 
+  // Debug logs – verify JS objects not null
+  console.log("quoteBtn:", quoteBtn);
+  console.log("swapBtn:", swapBtn);
+  console.log("statusEl:", statusEl);
+
   // NodeLists
   walletItemBtns =
     document.querySelectorAll<HTMLButtonElement>(".wallet-item");
@@ -705,7 +819,25 @@ function initUI() {
   });
 
   // wallet modal open/close
-  openWalletModalBtn.addEventListener("click", () => {
+  openWalletModalBtn.addEventListener("click", async () => {
+    // already connected থাকলে শুধু modal
+    if (connectedWallet) {
+      openWalletModal();
+      return;
+    }
+
+    // Direct connect try করো – আগে EVM, না থাকলে Phantom
+    if (w.ethereum) {
+      await connectMetamask();
+      return;
+    }
+
+    if (w.solana && w.solana.isPhantom) {
+      await connectPhantom();
+      return;
+    }
+
+    // কিছুই না থাকলে modal দেখাও
     openWalletModal();
   });
 
@@ -718,6 +850,16 @@ function initUI() {
       closeWalletModal();
     }
   });
+
+  // wallet disconnect (safe – element না থাকলে কিছুই করবে না)
+  disconnectWalletBtn = byId<HTMLButtonElement>("disconnectWallet");
+  if (disconnectWalletBtn) {
+    disconnectWalletBtn.addEventListener("click", () => {
+      connectedWallet = null;
+      updateWalletUI();
+      setStatus("Wallet disconnected.", "ok");
+    });
+  }
 
   // wallet choice
   walletItemBtns.forEach((btn) => {
@@ -748,58 +890,28 @@ function initUI() {
     fetchQuote();
   });
 
-  // Swap handler
-  swapBtn.addEventListener("click", async () => {
+  // Swap button placeholder (/api/swap নেই এখন)
+  swapBtn.disabled = true;
+  swapBtn.textContent = "Swap coming soon";
+  swapBtn.addEventListener("click", () => {
     if (!lastQuote) {
       setStatus("Get a quote first", "error");
       return;
     }
-
-    isSwapping = true;
-    maybeEnableSwapButton();
-
-    setStatus("Preparing transaction...");
-    if (progressBarEl) progressBarEl.style.width = "30%";
-
-    try {
-      const payload = {
-        quote: lastQuote,
-        wallet: connectedWallet,
-        dest: destAddressEl.value.trim(),
-        mev: mevToggleEl.checked,
-        refuel: refuelToggleEl.checked,
-      };
-
-      const res = await fetch("/api/swap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const tx = await res.json();
-      if (progressBarEl) progressBarEl.style.width = "70%";
-      setStatus("Transaction submitted...");
-
-      // Save history
-      bridgeHistory.push({
-        time: Date.now(),
-        amount: quoteMeta?.inputAmount,
-        from: fromChainEl.value,
-        to: toChainEl.value,
-        tx,
-      });
-
-      if (progressBarEl) progressBarEl.style.width = "100%";
-      setStatus("Bridge completed!", "ok");
-
-      celebrateBridge();
-    } catch (err) {
-      console.error(err);
-      setStatus("Swap failed", "error");
-    } finally {
-      isSwapping = false;
-      maybeEnableSwapButton();
+    if (!connectedWallet) {
+      setStatus("Connect a wallet first", "error");
+      return;
     }
+
+    // progress: user started executing bridge
+    setProgress("claim");
+
+    setStatus(
+      "Swap is coming soon. For now, only bridging is enabled.",
+      "default"
+    );
+
+    // future: real /api/swap success হলে এখানে setProgress("done") কল করবে
   });
 
   // ---- Tabs: Bridge / History ----
@@ -826,18 +938,28 @@ function initUI() {
   setupSlippageControls();
 
   updateChainLogos();
+
+  // render history from storage (if any)
+  renderHistoryPanel();
 }
 
 // ---- DOM content ready হলে init ----
 
-document.addEventListener("DOMContentLoaded", () => {
+console.log("App JS loaded");
+
+window.addEventListener("DOMContentLoaded", () => {
   try {
+    loadHistoryFromStorage();
     initUI();
     updateSummaryCard();
     updateWalletUI();
     pingBackend();
     initCustomCursor();
     console.log("Soul Swap UI initialized");
+
+    window.addEventListener("beforeunload", () => {
+      saveHistoryToStorage();
+    });
   } catch (err) {
     console.error("Initialization error:", err);
     // কোনো কারণে crash হলে হলেও default cursor ফিরে পাওয়ার জন্য

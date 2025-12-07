@@ -1167,11 +1167,6 @@ body::before {
    HEADER / LOGO FINAL TWEAKS
    ================================ */
 
-/* Backend: online badge hide */
-.backend-pill {
-  display: none !important;
-}
-
 /* Theme toggle যদি থাকে, লুকিয়ে দাও */
 .theme-btn {
   display: none !important;
@@ -1248,11 +1243,6 @@ body::before {
     margin-left: auto;
     flex-shrink: 0;
   }
-
-  /* Backend pill আবার দেখাতে চাইলে (optional) */
-  .backend-pill {
-    display: inline-flex !important;
-  }
 }
 
 /* ==================== MOBILE ONLY – FINAL PERFECT HEADER ==================== */
@@ -1327,6 +1317,11 @@ body::before {
     color: #0f172a !important;
     box-shadow: 0 10px 30px rgba(34, 211, 153, 0.45) !important;
   }
+
+  /* শুধু mobile এ hide করো */
+  .backend-pill {
+    display: none;
+  }
 }
 
 /* ছোট স্ক্রিনের জন্য অতিরিক্ত টুইক */
@@ -1347,4 +1342,92 @@ body::before {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* 1️⃣ Performance tweak – Low-end / very small screens এর জন্য লাইট ভার্সন */
+@media (max-width: 420px) {
+  .bridge-panel,
+  .card-section,
+  .history-panel {
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(14px);   /* আগে 22–26 ছিল, একটু কমালাম */
+  }
+
+  .bg-orbit {
+    filter: blur(50px);
+    opacity: 0.35;
+  }
+}
+
+/* 3️⃣ Performance mode utility (future-proof) */
+.performance-lite .bridge-panel,
+.performance-lite .card-section,
+.performance-lite .history-panel {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.performance-lite .bg-orbit {
+  display: none;
+}
+
+.step.active {
+  color: #00eaff;
+  font-weight: bold;
+  opacity: 1;
+}
+
+.step {
+  opacity: 0.4;
+  transition: opacity .3s;
+}
+
+/* Center Align */
+#progressTracker {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+}
+
+/* Base step pill style */
+#progressTracker .step {
+  padding: 6px 14px;
+  border-radius: 20px;  /* <-- Rounded pill */
+  background: rgba(255, 255, 255, 0.06); /* glassy */
+  color: #9bb5c9;
+  font-size: 13px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
+}
+
+/* Active glowing pill */
+#progressTracker .step.active {
+  color: #00eaff;
+  border-color: #00eaff;
+  background: rgba(0, 234, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 234, 255, 0.4);
+  font-weight: 600;
+  transform: translateY(-1px);
+}
+
+#progressTracker .step:hover {
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+}
+
+
+
+/* Remove number input spinners (Chrome, Edge, Safari) */
+.amount-input::-webkit-inner-spin-button,
+.amount-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox fix */
+.amount-input {
+  -moz-appearance: textfield;
 }
